@@ -6,7 +6,7 @@ import { auth, db } from "../lib/firebase";
 import upload from "../lib/upload";
 import { doc, setDoc } from "firebase/firestore";
 import Login from "./Login";
-import PhoneAuth from "./PhoneAuth";
+import PhoneAuthProduction from "./PhoneAuthProduction";
 
 const Registration = () => {
   const [login, setLogin] = useState(true);
@@ -74,7 +74,7 @@ const Registration = () => {
       {login ? (
         <Login setLogin={setLogin} />
       ) : authMethod === "phone" ? (
-        <PhoneAuth setLogin={setLogin} />
+        <PhoneAuthProduction setLogin={setLogin} />
       ) : (
         <div className="bg-gray-950 rounded-lg">
           <form

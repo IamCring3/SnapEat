@@ -113,7 +113,7 @@ const AdminDashboard = () => {
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-gray-500 text-sm font-medium uppercase mb-2">Total Revenue</h2>
-          <p className="text-3xl font-bold text-gray-900">${stats.totalRevenue.toFixed(2)}</p>
+          <p className="text-3xl font-bold text-gray-900">₹{stats.totalRevenue.toFixed(2)}</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-gray-500 text-sm font-medium uppercase mb-2">Recent Orders</h2>

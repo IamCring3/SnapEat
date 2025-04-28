@@ -46,19 +46,39 @@ export interface BlogProps {
   _base: string;
 }
 
+export interface AddressType {
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+}
+
 export interface UserTypes {
-  currentUser: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    avatar: string;
-    id: string;
-  };
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phoneNumber?: string;
+  avatar?: string;
+  id: string;
+  address?: AddressType;
+  createdAt?: string;
+  lastLogin?: string;
+  role?: string;
 }
 
 export interface OrderTypes {
   orderItems: [ProductProps];
   paymentId: string;
   paymentMethod: string;
-  userEmail: string;
+  userEmail?: string;
+  phoneNumber?: string;
+  userName?: string;
+  userId: string;
+  orderDate: string;
+  totalAmount: number;
+  shippingAddress?: AddressType;
+  shippingCost?: number;
+  taxAmount?: number;
 }

@@ -60,17 +60,27 @@ export const store = create<StoreType>()(
       compareProducts: [],
 
       getUserInfo: async (uid: any) => {
-        if (!uid) return set({ currentUser: null, isLoading: false });
+        if (!uid) {
+          console.log("No UID provided to getUserInfo");
+          return set({ currentUser: null, isLoading: false });
+        }
 
-        const docRef = doc(db, "users", uid);
-        const docSnap = await getDoc(docRef);
+        console.log("Getting user info for UID:", uid);
 
         try {
+          const docRef = doc(db, "users", uid);
+          console.log("Attempting to fetch user document from Firestore");
+          const docSnap = await getDoc(docRef);
+
           if (docSnap.exists()) {
+            console.log("User document found:", docSnap.data());
             set({ currentUser: docSnap.data() as UserTypes, isLoading: false });
+          } else {
+            console.log("No user document found for UID:", uid);
+            set({ currentUser: null, isLoading: false });
           }
         } catch (error) {
-          console.log("getUserInfo error", error);
+          console.error("getUserInfo error:", error);
           set({ currentUser: null, isLoading: false });
         }
       },

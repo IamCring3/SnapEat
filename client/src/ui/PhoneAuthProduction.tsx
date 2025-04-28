@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { auth, db, storage } from "../lib/firebase";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import toast from "react-hot-toast";
 import Loading from "./Loading";
@@ -10,6 +10,7 @@ import Label from "./Label";
 import { useNavigate } from "react-router-dom";
 import { store } from "../lib/store";
 
+// Declare global window type
 declare global {
   interface Window {
     recaptchaVerifier: any;
@@ -17,7 +18,7 @@ declare global {
   }
 }
 
-const PhoneAuth = ({ setLogin }: { setLogin: any }) => {
+const PhoneAuthProduction = ({ setLogin }: { setLogin: any }) => {
   const navigate = useNavigate();
   const { getUserInfo } = store();
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -30,50 +31,30 @@ const PhoneAuth = ({ setLogin }: { setLogin: any }) => {
     firstName: "",
     lastName: "",
     avatar: null as File | null,
-    avatarUrl: ""
+    avatarUrl: "",
+    address: {
+      addressLine1: "",
+      addressLine2: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      country: "India"
+    }
   });
 
-  // Clean up reCAPTCHA when component unmounts
+  // Clean up reCAPTCHA on component unmount
   useEffect(() => {
     return () => {
       if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
+        try {
+          window.recaptchaVerifier.clear();
+          window.recaptchaVerifier = null;
+        } catch (e) {
+          console.error("Error clearing reCAPTCHA on unmount:", e);
+        }
       }
     };
   }, []);
-
-  // Setup recaptcha
-  const setupRecaptcha = () => {
-    try {
-      console.log("Setting up reCAPTCHA...");
-      if (!window.recaptchaVerifier) {
-        // Use invisible reCAPTCHA for better user experience
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'send-code-button', {
-          'size': 'invisible',
-          'callback': () => {
-            // reCAPTCHA solved, allow signInWithPhoneNumber.
-            console.log("reCAPTCHA verified, sending verification code...");
-            // The sendVerificationCode will be called manually
-          },
-          'expired-callback': () => {
-            // Response expired. Ask user to solve reCAPTCHA again.
-            console.log("reCAPTCHA expired");
-            toast.error("Verification expired. Please try again.");
-            if (window.recaptchaVerifier) {
-              window.recaptchaVerifier.clear();
-              window.recaptchaVerifier = null;
-            }
-          }
-        });
-
-        console.log("reCAPTCHA verifier created");
-      }
-    } catch (error) {
-      console.error("Error setting up reCAPTCHA:", error);
-      toast.error("Failed to set up verification. Please try again.");
-    }
-  };
 
   // Send verification code
   const sendVerificationCode = async () => {
@@ -88,7 +69,24 @@ const PhoneAuth = ({ setLogin }: { setLogin: any }) => {
 
       console.log("Sending verification code to:", formattedPhoneNumber);
 
-      // Send verification code
+      // IMPORTANT: Always clear any existing reCAPTCHA first
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+          window.recaptchaVerifier = null;
+        } catch (e) {
+          console.error("Error clearing existing reCAPTCHA:", e);
+        }
+      }
+
+      // Create a new reCAPTCHA verifier - SIMPLEST POSSIBLE IMPLEMENTATION
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible' // Using invisible for better user experience
+      });
+
+      console.log("Created new reCAPTCHA verifier");
+
+      // Send verification code with the newly created verifier
       const confirmationResult = await signInWithPhoneNumber(
         auth,
         formattedPhoneNumber,
@@ -105,35 +103,52 @@ const PhoneAuth = ({ setLogin }: { setLogin: any }) => {
       toast.success("Verification code sent!");
     } catch (error: any) {
       console.error("Error sending verification code:", error);
-      // Log detailed error information
-      if (error.code) {
-        console.error("Error code:", error.code);
-      }
-      if (error.message) {
-        console.error("Error message:", error.message);
-      }
+      console.error("Error details:", JSON.stringify(error, null, 2));
 
+      // Get error message
       let errorMessage = "Failed to send verification code";
 
-      // More specific error messages based on error code
-      if (error.code === 'auth/invalid-phone-number') {
-        errorMessage = "Invalid phone number format. Please include country code (e.g., +1234567890)";
-      } else if (error.code === 'auth/missing-phone-number') {
-        errorMessage = "Please enter a phone number";
-      } else if (error.code === 'auth/quota-exceeded') {
-        errorMessage = "SMS quota exceeded. Please try again later";
-      } else if (error.code === 'auth/captcha-check-failed') {
-        errorMessage = "reCAPTCHA verification failed. Please try again";
+      if (error.code) {
+        console.log("Error code:", error.code);
+
+        // Simple error mapping
+        const errorMessages = {
+          'auth/invalid-phone-number': "Invalid phone number format. Please include country code (e.g., +1234567890)",
+          'auth/missing-phone-number': "Please enter a phone number",
+          'auth/quota-exceeded': "SMS quota exceeded. Please try again later.",
+          'auth/captcha-check-failed': "reCAPTCHA verification failed. Please try again with a different browser or device.",
+          'auth/operation-not-allowed': "Phone authentication is not enabled. Please contact support.",
+          'auth/too-many-requests': "Too many verification attempts. Please try again after some time or use a different phone number.",
+          'auth/invalid-app-credential': "reCAPTCHA verification failed. This usually happens when Firebase can't verify your domain. Try using a different phone number or contact support.",
+          'auth/network-request-failed': "Network error. Please check your internet connection and try again.",
+          'auth/argument-error': "Invalid argument provided to Firebase. Please check your phone number format."
+        };
+
+        errorMessage = errorMessages[error.code] || `Error: ${error.message || error.code}`;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      // Special handling for common errors
+      if (error.code === 'auth/invalid-app-credential') {
+        // This error often happens when the reCAPTCHA verification fails
+        errorMessage = "Verification failed. Please try a different phone number or browser.";
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = "Too many attempts. Please try again later or use a different phone number.";
+      }
+
+      // Always clear reCAPTCHA on error
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+          window.recaptchaVerifier = null;
+        } catch (e) {
+          console.error("Error clearing reCAPTCHA:", e);
+        }
       }
 
       setError(errorMessage);
       toast.error(errorMessage);
-
-      // Reset recaptcha
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
-      }
     } finally {
       setLoading(false);
     }
@@ -166,15 +181,23 @@ const PhoneAuth = ({ setLogin }: { setLogin: any }) => {
         }
 
         // Save user profile to Firestore
-        await setDoc(doc(db, "users", user.uid), {
-          firstName: userInfo.firstName,
-          lastName: userInfo.lastName,
-          phoneNumber: user.phoneNumber,
-          avatar: avatarUrl,
-          id: user.uid,
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString()
-        }, { merge: true });
+        console.log("Saving user profile to Firestore with UID:", user.uid);
+        try {
+          await setDoc(doc(db, "users", user.uid), {
+            firstName: userInfo.firstName,
+            lastName: userInfo.lastName,
+            phoneNumber: user.phoneNumber,
+            avatar: avatarUrl,
+            id: user.uid,
+            address: userInfo.address,
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+          }, { merge: true });
+          console.log("User profile saved successfully");
+        } catch (error) {
+          console.error("Error saving user profile:", error);
+          toast.error("Error saving user profile. Please try again.");
+        }
 
         toast.success("Successfully registered and logged in!");
       } else {
@@ -191,7 +214,15 @@ const PhoneAuth = ({ setLogin }: { setLogin: any }) => {
         firstName: "",
         lastName: "",
         avatar: null,
-        avatarUrl: ""
+        avatarUrl: "",
+        address: {
+          addressLine1: "",
+          addressLine2: "",
+          city: "",
+          state: "",
+          postalCode: "",
+          country: "India"
+        }
       });
 
       // Update the global store with the user information
@@ -217,34 +248,61 @@ const PhoneAuth = ({ setLogin }: { setLogin: any }) => {
     e.preventDefault();
     console.log("Phone submit form submitted");
 
-    // Validate user information if registering
-    if (isRegistering && (!userInfo.firstName || !userInfo.lastName)) {
-      setError("First name and last name are required");
-      return;
+    try {
+      // Clear any previous errors
+      setError("");
+
+      // Validate user information if registering
+      if (isRegistering) {
+        if (!userInfo.firstName || !userInfo.lastName) {
+          setError("First name and last name are required");
+          return;
+        }
+
+        // Validate address fields if registering
+        if (!userInfo.address.addressLine1 || !userInfo.address.city ||
+            !userInfo.address.state || !userInfo.address.postalCode) {
+          setError("Please fill in all required address fields");
+          return;
+        }
+
+        // Validate postal code format for India
+        if (userInfo.address.country === "India" && !/^\d{6}$/.test(userInfo.address.postalCode)) {
+          setError("Please enter a valid 6-digit postal code for India");
+          return;
+        }
+      }
+
+      // Validate phone number format
+      if (!phoneNumber) {
+        setError("Please enter a phone number");
+        return;
+      }
+
+      const formattedPhoneNumber = phoneNumber.startsWith("+")
+        ? phoneNumber
+        : `+${phoneNumber}`;
+
+      // Basic validation for phone number format
+      const phoneRegex = /^\+[1-9]\d{1,14}$/;
+      if (!phoneRegex.test(formattedPhoneNumber)) {
+        setError("Invalid phone number format. Please include country code (e.g., +1234567890)");
+        return;
+      }
+
+      // For India, validate phone number format more strictly
+      if (formattedPhoneNumber.startsWith("+91") && !/^\+91[6-9]\d{9}$/.test(formattedPhoneNumber)) {
+        setError("Invalid Indian phone number. Format should be +91 followed by a 10-digit number starting with 6-9");
+        return;
+      }
+
+      // Send verification code
+      await sendVerificationCode();
+    } catch (error: any) {
+      console.error("Error in phone submit:", error);
+      setError(error.message || "An unexpected error occurred");
+      toast.error("Failed to process your request. Please try again.");
     }
-
-    // Validate phone number format
-    if (!phoneNumber) {
-      setError("Please enter a phone number");
-      return;
-    }
-
-    const formattedPhoneNumber = phoneNumber.startsWith("+")
-      ? phoneNumber
-      : `+${phoneNumber}`;
-
-    // Basic validation for phone number format
-    const phoneRegex = /^\+[1-9]\d{1,14}$/;
-    if (!phoneRegex.test(formattedPhoneNumber)) {
-      setError("Invalid phone number format. Please include country code (e.g., +1234567890)");
-      return;
-    }
-
-    // Setup reCAPTCHA first
-    setupRecaptcha();
-
-    // Then manually send the verification code
-    await sendVerificationCode();
   };
 
   // Handle verification code submit
@@ -267,6 +325,14 @@ const PhoneAuth = ({ setLogin }: { setLogin: any }) => {
 
   return (
     <div className="bg-gray-950 rounded-lg">
+      {/* Invisible reCAPTCHA container */}
+      <div id="recaptcha-container"></div>
+      {/* Info message about verification */}
+      <div className="bg-blue-900 text-white p-3 rounded-t-lg text-sm">
+        <p className="font-bold">Phone Verification</p>
+        <p>You will receive a verification code via SMS. Standard message rates may apply.</p>
+      </div>
+
       {step === 1 ? (
         <form onSubmit={handlePhoneSubmit} className="max-w-5xl mx-auto pt-10 px-10 lg:px-0 text-white">
           <div className="border-b border-b-white/10 pb-5">
@@ -325,6 +391,9 @@ const PhoneAuth = ({ setLogin }: { setLogin: any }) => {
                   className="block w-full rounded-md border-0 bg-white/5 py-1.5 px-4 outline-none text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-skyText sm:text-sm sm:leading-6 mt-2"
                   required
                 />
+                <div className="mt-1 text-xs text-gray-400">
+                  Make sure to include the country code (e.g., +91 for India)
+                </div>
               </div>
 
               {isRegistering && (
@@ -369,9 +438,105 @@ const PhoneAuth = ({ setLogin }: { setLogin: any }) => {
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* reCAPTCHA container is no longer needed as we're using invisible reCAPTCHA */}
+              {isRegistering && (
+                <>
+                  <div className="sm:col-span-6">
+                    <h3 className="text-base font-semibold text-white mb-3">Address Information</h3>
+                  </div>
+                  <div className="sm:col-span-6">
+                    <Label title="Address Line 1" htmlFor="addressLine1" />
+                    <input
+                      type="text"
+                      name="addressLine1"
+                      id="addressLine1"
+                      value={userInfo.address.addressLine1}
+                      onChange={(e) => setUserInfo({
+                        ...userInfo,
+                        address: {...userInfo.address, addressLine1: e.target.value}
+                      })}
+                      className="block w-full rounded-md border-0 bg-white/5 py-1.5 px-4 outline-none text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-skyText sm:text-sm sm:leading-6 mt-2"
+                    />
+                  </div>
+                  <div className="sm:col-span-6">
+                    <Label title="Address Line 2 (Optional)" htmlFor="addressLine2" />
+                    <input
+                      type="text"
+                      name="addressLine2"
+                      id="addressLine2"
+                      value={userInfo.address.addressLine2}
+                      onChange={(e) => setUserInfo({
+                        ...userInfo,
+                        address: {...userInfo.address, addressLine2: e.target.value}
+                      })}
+                      className="block w-full rounded-md border-0 bg-white/5 py-1.5 px-4 outline-none text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-skyText sm:text-sm sm:leading-6 mt-2"
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <Label title="City" htmlFor="city" />
+                    <input
+                      type="text"
+                      name="city"
+                      id="city"
+                      value={userInfo.address.city}
+                      onChange={(e) => setUserInfo({
+                        ...userInfo,
+                        address: {...userInfo.address, city: e.target.value}
+                      })}
+                      className="block w-full rounded-md border-0 bg-white/5 py-1.5 px-4 outline-none text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-skyText sm:text-sm sm:leading-6 mt-2"
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <Label title="State / Province" htmlFor="state" />
+                    <input
+                      type="text"
+                      name="state"
+                      id="state"
+                      value={userInfo.address.state}
+                      onChange={(e) => setUserInfo({
+                        ...userInfo,
+                        address: {...userInfo.address, state: e.target.value}
+                      })}
+                      className="block w-full rounded-md border-0 bg-white/5 py-1.5 px-4 outline-none text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-skyText sm:text-sm sm:leading-6 mt-2"
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <Label title="Postal Code" htmlFor="postalCode" />
+                    <input
+                      type="text"
+                      name="postalCode"
+                      id="postalCode"
+                      value={userInfo.address.postalCode}
+                      onChange={(e) => setUserInfo({
+                        ...userInfo,
+                        address: {...userInfo.address, postalCode: e.target.value}
+                      })}
+                      className="block w-full rounded-md border-0 bg-white/5 py-1.5 px-4 outline-none text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-skyText sm:text-sm sm:leading-6 mt-2"
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <Label title="Country" htmlFor="country" />
+                    <select
+                      name="country"
+                      id="country"
+                      value={userInfo.address.country}
+                      onChange={(e) => setUserInfo({
+                        ...userInfo,
+                        address: {...userInfo.address, country: e.target.value}
+                      })}
+                      className="block w-full rounded-md border-0 bg-white/5 py-1.5 px-4 outline-none text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-skyText sm:text-sm sm:leading-6 mt-2"
+                    >
+                      <option value="India">India</option>
+                      <option value="United States">United States</option>
+                      <option value="Canada">Canada</option>
+                      <option value="United Kingdom">United Kingdom</option>
+                      <option value="Australia">Australia</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {error && (
@@ -381,9 +546,19 @@ const PhoneAuth = ({ setLogin }: { setLogin: any }) => {
           )}
 
           <button
-            id="send-code-button" // This ID is used by the reCAPTCHA verifier
             type="submit"
-            disabled={loading || !phoneNumber || (isRegistering && (!userInfo.firstName || !userInfo.lastName))}
+            disabled={
+              loading ||
+              !phoneNumber ||
+              (isRegistering && (
+                !userInfo.firstName ||
+                !userInfo.lastName ||
+                !userInfo.address.addressLine1 ||
+                !userInfo.address.city ||
+                !userInfo.address.state ||
+                !userInfo.address.postalCode
+              ))
+            }
             className="mt-5 bg-primary w-full py-2 uppercase text-base font-bold tracking-wide text-white rounded-md hover:!bg-white hover:text-red-600 hover:border-2 hover:border-red-600 duration-300 ease-in disabled:bg-gray-500 disabled:hover:bg-gray-500 disabled:hover:text-white disabled:hover:border-transparent"
           >
             {loading ? "Sending..." : "Send Verification Code"}
@@ -432,10 +607,6 @@ const PhoneAuth = ({ setLogin }: { setLogin: any }) => {
               onClick={() => {
                 setStep(1);
                 setError("");
-                if (window.recaptchaVerifier) {
-                  window.recaptchaVerifier.clear();
-                  window.recaptchaVerifier = null;
-                }
               }}
               className="bg-gray-700 w-1/2 py-2 uppercase text-base font-bold tracking-wide text-white rounded-md hover:bg-gray-600 duration-300 ease-in"
             >
@@ -471,4 +642,4 @@ const PhoneAuth = ({ setLogin }: { setLogin: any }) => {
   );
 };
 
-export default PhoneAuth;
+export default PhoneAuthProduction;

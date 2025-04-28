@@ -1,31 +1,41 @@
 import { useState } from "react";
 import { store } from "../lib/store";
 import toast from "react-hot-toast";
+import { AddressType } from "../../type";
 
 interface ShippingAddressProps {
   onAddressSubmit: (address: ShippingAddressType) => void;
 }
 
-export interface ShippingAddressType {
+export interface ShippingAddressType extends AddressType {
   fullName: string;
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
   phoneNumber: string;
 }
 
 const ShippingAddressForm = ({ onAddressSubmit }: ShippingAddressProps) => {
   const { currentUser } = store();
 
-  // Try to load saved address from localStorage
+  // Try to load saved address from localStorage or user profile
   const getSavedAddress = (): ShippingAddressType | null => {
     try {
+      // First check localStorage for the most recently used address
       const savedAddress = localStorage.getItem('lastShippingAddress');
       if (savedAddress) {
         return JSON.parse(savedAddress);
+      }
+
+      // If no address in localStorage, check if user has an address in their profile
+      if (currentUser?.address) {
+        return {
+          fullName: `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim(),
+          addressLine1: currentUser.address.addressLine1 || "",
+          addressLine2: currentUser.address.addressLine2 || "",
+          city: currentUser.address.city || "",
+          state: currentUser.address.state || "",
+          postalCode: currentUser.address.postalCode || "",
+          country: currentUser.address.country || "India",
+          phoneNumber: currentUser?.phoneNumber || "",
+        };
       }
     } catch (error) {
       console.error("Error loading saved address:", error);

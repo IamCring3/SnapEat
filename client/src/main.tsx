@@ -19,7 +19,11 @@ import Kitchen from "./pages/Kitchen.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AdminOrders from "./pages/AdminOrders.tsx";
 import AdminUsers from "./pages/AdminUsers.tsx";
+import AdminProducts from "./pages/AdminProducts.tsx";
+import AdminCategories from "./pages/AdminCategories.tsx";
 import AdminLogin from "./pages/AdminLogin.tsx";
+
+
 import Layout from "./ui/Layout.tsx";
 import AdminLayout from "./ui/AdminLayout.tsx";
 
@@ -92,6 +96,7 @@ const router = createBrowserRouter([
         path: "/admin/login",
         element: <AdminLogin />,
       },
+
       {
         path: "*",
         element: <NotFound />,
@@ -113,6 +118,14 @@ const router = createBrowserRouter([
       {
         path: "users",
         element: <AdminUsers />,
+      },
+      {
+        path: "products",
+        element: <AdminProducts />,
+      },
+      {
+        path: "categories",
+        element: <AdminCategories />,
       },
     ],
   },

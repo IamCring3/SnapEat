@@ -14,7 +14,7 @@ const AdminLayout = () => {
       try {
         const userDoc = await getDoc(doc(db, "users", uid));
         const userData = userDoc.data();
-        
+
         if (userData?.role === "admin") {
           setIsAdmin(true);
         } else {
@@ -52,51 +52,51 @@ const AdminLayout = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-primary text-white py-4 px-6 flex justify-between items-center">
         <h1 className="text-xl font-bold">SnapEat Admin</h1>
-        <button 
+        <button
           onClick={() => auth.signOut()}
           className="bg-white text-primary px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
         >
           Sign Out
         </button>
       </div>
-      
+
       <div className="flex">
         {/* Sidebar */}
         <div className="w-64 bg-white shadow-md min-h-screen p-4">
           <nav className="space-y-2">
-            <a 
-              href="/admin/dashboard" 
+            <a
+              href="/admin/dashboard"
               className="block px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               Dashboard
             </a>
-            <a 
-              href="/admin/orders" 
-              className="block px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
-            >
-              Orders
-            </a>
-            <a 
-              href="/admin/users" 
-              className="block px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
-            >
-              Users
-            </a>
-            <a 
-              href="/admin/products" 
+            <a
+              href="/admin/products"
               className="block px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               Products
             </a>
-            <a 
-              href="/admin/settings" 
+            <a
+              href="/admin/categories"
               className="block px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
             >
-              Settings
+              Categories
+            </a>
+            <a
+              href="/admin/orders"
+              className="block px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
+            >
+              Orders
+            </a>
+            <a
+              href="/admin/users"
+              className="block px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
+            >
+              Users
             </a>
           </nav>
         </div>
-        
+
         {/* Main content */}
         <div className="flex-1 p-6">
           <Outlet />

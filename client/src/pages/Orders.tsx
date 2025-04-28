@@ -3,7 +3,7 @@ import {
   DisclosureButton,
   DisclosurePanel,
 } from "@headlessui/react";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import { Link } from "react-router-dom";
@@ -24,22 +24,67 @@ const Orders = () => {
       try {
         // Make sure we have a user ID
         if (!currentUser?.id) {
-          console.log("No user ID available");
+          console.log("No user ID available for fetching orders");
           setLoading(false);
           return;
         }
 
         console.log("Fetching orders for user ID:", currentUser.id);
+        let allOrders = [];
+
+        // 1. Check the regular orders collection first
         const docRef = doc(db, "orders", currentUser.id);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
           const orderData = docSnap?.data()?.orders;
-          console.log("Orders found:", orderData?.length || 0);
-          setOrders(orderData);
+          console.log("Orders document exists with data:", docSnap.data());
+          console.log("Orders found in regular collection:", orderData?.length || 0);
+
+          if (Array.isArray(orderData)) {
+            allOrders = [...orderData];
+          }
         } else {
-          console.log("No orders document found for this user");
+          console.log("No orders document found in regular collection for user ID:", currentUser.id);
         }
+
+        // 2. Check the temporary orders collection
+        console.log("Checking temporary orders collection");
+        const tempOrdersRef = collection(db, "temp_orders");
+        const q = query(tempOrdersRef, where("userId", "==", currentUser.id));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          console.log("Found orders in temporary collection:", querySnapshot.size);
+
+          querySnapshot.forEach((doc) => {
+            const tempOrderData = doc.data();
+            console.log("Temporary order:", tempOrderData);
+
+            // Format the temp order to match the regular order structure
+            const formattedOrder = {
+              paymentId: tempOrderData.paymentId,
+              orderItems: tempOrderData.orderItems,
+              paymentMethod: tempOrderData.paymentMethod,
+              orderDate: tempOrderData.orderDate,
+              totalAmount: tempOrderData.totalAmount,
+              shippingAddress: tempOrderData.shippingAddress,
+              userEmail: tempOrderData.userEmail,
+              phoneNumber: tempOrderData.phoneNumber,
+              userName: tempOrderData.userName,
+              userId: tempOrderData.userId
+            };
+
+            allOrders.push(formattedOrder);
+          });
+        } else {
+          console.log("No orders found in temporary collection");
+        }
+
+        // 3. Set all orders
+        console.log("Total orders found:", allOrders.length);
+        setOrders(allOrders);
+
       } catch (error) {
         console.error("Error fetching orders:", error);
       } finally {

@@ -24,7 +24,16 @@ const firebaseConfig = {
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 export const analytics = getAnalytics(app);
-export const auth = getAuth();
-export const db = getFirestore();
-export const storage = getStorage();
-export const rtdb = getDatabase(); // Realtime Database
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export const rtdb = getDatabase(app); // Realtime Database
+
+// Using production Firebase configuration
+
+// Log Firebase initialization
+console.log("Firebase initialized with config:", {
+  projectId: firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain,
+  appId: firebaseConfig.appId
+});
