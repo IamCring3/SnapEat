@@ -17,9 +17,9 @@ function App() {
       {/* ProductList */}
       <ProductList />
       {/* DiscountedBanner */}
-      <DiscountedBanner />
+      {/* <DiscountedBanner /> */}
       {/* Blog */}
-      <Blog />
+      {/* <Blog /> */}
     </main>
   );
 }
