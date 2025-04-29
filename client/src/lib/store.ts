@@ -144,7 +144,7 @@ export const store = create<StoreType>()(
       },
     }),
     {
-      name: "supergear-storage",
+      name: "SnapEat-storage",
       storage: customStorage,
     }
   )

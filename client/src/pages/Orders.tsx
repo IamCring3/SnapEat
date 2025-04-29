@@ -119,7 +119,7 @@ const Orders = () => {
           <div className="flex flex-col gap-3">
             <div className="space-y-6 divide-y divide-gray-900/10">
               {orders?.map((order: OrderTypes) => {
-                const totalAmt = order?.orderItems.reduce(
+                const totalAmt = (order?.orderItems ?? []).reduce(
                   (acc, item) =>
                     acc + (item?.discountedPrice * item?.quantity || 0),
                   0
@@ -144,7 +144,7 @@ const Orders = () => {
                             <p className="text-base font-semibold">
                               Your order{" "}
                               <span className="text-skyText">
-                                #{order?.paymentId.substring(0, 20)}...
+                                #{(order?.paymentId || "").substring(0, 20)}...
                               </span>{" "}
                               has shipped and will be with you soon.
                             </p>
