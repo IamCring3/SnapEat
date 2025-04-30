@@ -1,13 +1,35 @@
 {
   "version": 2,
-  "buildCommand": "cd client && pnpm install --no-frozen-lockfile && pnpm build",
-  "installCommand": "pnpm install --no-frozen-lockfile",
-  "outputDirectory": "client/dist",
-  "framework": null,
+  "builds": [
+    {
+      "src": "admin/index.mjs",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "client/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist",
+        "buildCommand": "cd client && pnpm install --no-frozen-lockfile && pnpm build"
+      }
+    }
+  ],
   "routes": [
-    { "handle": "filesystem" },
-    { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "/(.*)\\.(.+)", "dest": "/$1.$2" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    {
+      "src": "/admin/(.*)",
+      "dest": "/admin/index.mjs"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/client/dist/assets/$1"
+    },
+    {
+      "src": "/(.*)\\.(.+)",
+      "dest": "/client/dist/$1.$2"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/client/dist/index.html"
+    }
   ]
 }
