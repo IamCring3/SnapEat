@@ -3,5 +3,11 @@
   "buildCommand": "cd client && pnpm install --no-frozen-lockfile && pnpm build",
   "installCommand": "pnpm install --no-frozen-lockfile",
   "outputDirectory": "client/dist",
-  "framework": null
+  "framework": null,
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "/(.*)\\.(.+)", "dest": "/$1.$2" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
 }
