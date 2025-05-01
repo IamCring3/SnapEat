@@ -38,13 +38,11 @@ const Product = () => {
           setProductData(data);
           setAllProducts([]);
         } else {
-          // Exclude kitchen-only products from general listing
-          const filtered = Array.isArray(data)
-            ? data.filter((product: ProductProps) =>
-                !product.isKitchenOnly && product.pageType !== "kitchen"
-              )
-            : [];
-          setAllProducts(filtered);
+          // Filter out kitchen products from the product page
+        const filtered = Array.isArray(data)
+          ? data.filter((product: ProductProps) => product._base !== "kitchen" && product.pageType !== "kitchen")
+          : [];
+        setAllProducts(filtered);
           setProductData(null);
         }
       } catch (error) {

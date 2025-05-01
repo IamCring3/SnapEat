@@ -3,7 +3,7 @@ import {
   DisclosureButton,
   DisclosurePanel,
 } from "@headlessui/react";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import { Link } from "react-router-dom";
@@ -22,22 +22,80 @@ const Orders = () => {
     const getData = async () => {
       setLoading(true);
       try {
-        const docRef = doc(db, "orders", currentUser?.email!);
+        // Make sure we have a user ID
+        if (!currentUser?.id) {
+          console.log("No user ID available for fetching orders");
+          setLoading(false);
+          return;
+        }
+
+        console.log("Fetching orders for user ID:", currentUser.id);
+        let allOrders = [];
+
+        // 1. Check the regular orders collection first
+        const docRef = doc(db, "orders", currentUser.id);
         const docSnap = await getDoc(docRef);
+
         if (docSnap.exists()) {
           const orderData = docSnap?.data()?.orders;
-          setOrders(orderData);
+          console.log("Orders document exists with data:", docSnap.data());
+          console.log("Orders found in regular collection:", orderData?.length || 0);
+
+          if (Array.isArray(orderData)) {
+            allOrders = [...orderData];
+          }
         } else {
-          console.log("No orders yet!");
+          console.log("No orders document found in regular collection for user ID:", currentUser.id);
         }
+
+        // 2. Check the temporary orders collection
+        console.log("Checking temporary orders collection");
+        const tempOrdersRef = collection(db, "temp_orders");
+        const q = query(tempOrdersRef, where("userId", "==", currentUser.id));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          console.log("Found orders in temporary collection:", querySnapshot.size);
+
+          querySnapshot.forEach((doc) => {
+            const tempOrderData = doc.data();
+            console.log("Temporary order:", tempOrderData);
+
+            // Format the temp order to match the regular order structure
+            const formattedOrder = {
+              paymentId: tempOrderData.paymentId,
+              orderItems: tempOrderData.orderItems,
+              paymentMethod: tempOrderData.paymentMethod,
+              orderDate: tempOrderData.orderDate,
+              totalAmount: tempOrderData.totalAmount,
+              shippingAddress: tempOrderData.shippingAddress,
+              userEmail: tempOrderData.userEmail,
+              phoneNumber: tempOrderData.phoneNumber,
+              userName: tempOrderData.userName,
+              userId: tempOrderData.userId
+            };
+
+            allOrders.push(formattedOrder);
+          });
+        } else {
+          console.log("No orders found in temporary collection");
+        }
+
+        // 3. Set all orders
+        console.log("Total orders found:", allOrders.length);
+        setOrders(allOrders);
+
       } catch (error) {
-        console.log("Data fetching error", error);
+        console.error("Error fetching orders:", error);
       } finally {
         setLoading(false);
       }
     };
-    getData();
-  }, []);
+
+    if (currentUser) {
+      getData();
+    }
+  }, [currentUser]);
   return (
     <Container>
       {loading ? (
@@ -56,7 +114,7 @@ const Orders = () => {
             <span className="text-black font-semibold">{orders?.length}</span>
           </p>
           <p className="text-sm max-w-[600px] tracking-wide text-gray-500">
-            
+
           </p>
           <div className="flex flex-col gap-3">
             <div className="space-y-6 divide-y divide-gray-900/10">
@@ -100,7 +158,7 @@ const Orders = () => {
                               <p className="text-gray-600">
                                 Payment Status:{" "}
                                 <span className="text-black font-medium">
-                                  Paid by Stripe
+                                  Paid by {order?.paymentMethod === 'razorpay' ? 'Razorpay' : 'Stripe'}
                                 </span>
                               </p>
                               <p className="text-gray-600">
@@ -109,6 +167,22 @@ const Orders = () => {
                                   <FormattedPrice amount={totalAmt} />
                                 </span>
                               </p>
+
+                              {order?.shippingAddress && (
+                                <div className="mt-2">
+                                  <p className="text-gray-600 font-medium">Shipping Address:</p>
+                                  <p className="text-sm text-gray-700">{order.shippingAddress.fullName}</p>
+                                  <p className="text-sm text-gray-700">{order.shippingAddress.addressLine1}</p>
+                                  {order.shippingAddress.addressLine2 && (
+                                    <p className="text-sm text-gray-700">{order.shippingAddress.addressLine2}</p>
+                                  )}
+                                  <p className="text-sm text-gray-700">
+                                    {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}
+                                  </p>
+                                  <p className="text-sm text-gray-700">{order.shippingAddress.country}</p>
+                                  <p className="text-sm text-gray-700">{order.shippingAddress.phoneNumber}</p>
+                                </div>
+                              )}
                             </div>
                             {order?.orderItems?.map((item: ProductProps) => (
                               <div

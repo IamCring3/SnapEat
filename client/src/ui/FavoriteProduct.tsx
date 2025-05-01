@@ -29,7 +29,7 @@ const FavoriteProduct = ({ product }: { product: ProductProps }) => {
             </div>
             <span
               onClick={() => {
-                removeFromFavorite(product?._id);
+                removeFromFavorite(String(product?._id));
                 toast.success("Removed from favorite successfully!");
               }}
               className="text-lg text-gray-600 hover:text-red-600 duration-200 cursor-pointer inline-block mt-4 sm:mt-0"

@@ -1,0 +1,20 @@
+/admin/dashboard - admin url
+
+
+Create a superuser Using Script 
+
+npm run create-admin
+
+cd admin
+npm install firebase
+npm start
+
+cd client
+npm run dev
+
+
+product page -- 
+hardcoded in src/data
+
+success@razorpay
+testing upi id 

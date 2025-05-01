@@ -2,15 +2,89 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/assets/logo.jpg" type="image/jpeg" />
+    <link rel="icon" href="/src/assets/logo.jpg" type="image/jpeg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SuperGear Admin Dashboard</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Add custom styles -->
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+        margin: 0;
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      h2 {
+        font-size: 25px;
+        text-decoration: underline;
+      }
+      p {
+        font-size: 16px;
+        color: #333;
+      }
+      .routes p {
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+      a {
+        display: block;
+        font-size: 16px;
+        color: #000000;
+        text-decoration: none;
+        margin-bottom: 5px;
+        text-decoration: underline;
+      }
+      a:hover {
+        text-decoration: underline;
+        color: #0265cf;
+      }
+    </style>
   </head>
   <body>
+    <div class="container">
+        <!-- Sidebar will be conditionally rendered by JS. -->
+        <!-- Main Content -->
+        <main class="content">
+            <header>
+                <h1>Dashboard</h1>
+            </header>
+            <div id="dashboard-content" class="dashboard-grid">
+                <!-- Dashboard emptied as requested -->
+                <!-- Top Categories Chart -->
+                <div class="chart-card" id="top-categories">
+                    <h3>Top Categories</h3>
+                    <canvas id="categories-chart" height="120"></canvas>
+                </div>
+                <!-- Active Users Table -->
+                <div class="table-card" id="active-users">
+                    <h3>Active Users</h3>
+                    <table>
+                        <thead><tr><th>Country</th><th>Users</th><th>Percent</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <!-- Conversion Rate Chart -->
+                <div class="chart-card" id="conversion-rate">
+                    <h3>Conversion Rate</h3>
+                    <canvas id="conversion-chart" height="120"></canvas>
+                </div>
+                <!-- Traffic Sources Table -->
+                <div class="table-card" id="traffic-sources">
+                    <h3>Traffic Sources</h3>
+                    <table>
+                        <thead><tr><th>Source</th><th>Percent</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
     <div class="container">
         <nav class="sidebar">
             <div class="logo">
@@ -52,34 +126,11 @@
                     </div>
                 </div>
             </header>
-            <div id="dashboard-content" class="dashboard-grid">
-                <!-- Top Categories Chart -->
-                <div class="chart-card" id="top-categories">
-                    <h3>Top Categories</h3>
-                    <canvas id="categories-chart" height="120"></canvas>
-                </div>
-                <!-- Active Users Table -->
-                <div class="table-card" id="active-users">
-                    <h3>Active Users</h3>
-                    <table>
-                        <thead><tr><th>Country</th><th>Users</th><th>Percent</th></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-                <!-- Conversion Rate Chart -->
-                <div class="chart-card" id="conversion-rate">
-                    <h3>Conversion Rate</h3>
-                    <canvas id="conversion-chart" height="120"></canvas>
-                </div>
-                <!-- Traffic Sources Table -->
-                <div class="table-card" id="traffic-sources">
-                    <h3>Traffic Sources</h3>
-                    <table>
-                        <thead><tr><th>Source</th><th>Percent</th></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
+            <div id="dashboard-content" class="page active">
+                <!-- Dashboard emptied as requested -->
+            <!-- Orders Management section removed -->
+            <!-- Products Management section removed -->
+            <!-- Users Management section removed -->
         </main>
     </div>
     <script src="app.js"></script>

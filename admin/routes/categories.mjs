@@ -8,12 +8,8 @@ router.get("/categories", (req, res) => {
 });
 
 router.get("/categories/:id", (req, res) => {
-  const id = req.params.id?.toLowerCase().trim();
-  const matchedProducts = products?.filter((item) => {
-    const base = (item?._base || "").toLowerCase().trim();
-    const category = (item?.category || "").toLowerCase().replace(/\s|&/g, "");
-    return base === id || category === id;
-  });
+  const id = req.params.id;
+  const matchedProducts = products?.filter((item) => item?._base === id);
 
   if (!matchedProducts || matchedProducts.length === 0) {
     return res

@@ -1,1 +1,57 @@
+# Dependencies
+client/node_modules
+admin/node_modules
 node_modules
+
+# Build outputs
+client/dist
+client/build
+admin/dist
+admin/build
+dist
+build
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+client/.env
+client/.env.local
+admin/.env
+admin/.env.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
+  
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.runtimeconfig.json
+
+# Testing
+coverage
+
+# Misc
+.cache
+.temp

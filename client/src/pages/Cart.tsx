@@ -3,13 +3,16 @@ import { FaQuestionCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { store } from "../lib/store";
 import CartProduct from "../ui/CartProduct";
-import CheckoutBtn from "../ui/CheckoutBtn";
+import RazorpayCheckoutBtn from "../ui/RazorpayCheckoutBtn";
 import Container from "../ui/Container";
 import FormattedPrice from "../ui/FormattedPrice";
+import ShippingAddressForm, { ShippingAddressType } from "../ui/ShippingAddressForm";
 
 const Cart = () => {
   const [totalAmt, setTotalAmt] = useState({ regular: 0, discounted: 0 });
   const { cartProduct, currentUser } = store();
+  const [shippingAddress, setShippingAddress] = useState<ShippingAddressType | null>(null);
+  const [showAddressForm, setShowAddressForm] = useState(true);
 
   const shippingAmt = 25;
   const taxAmt = 15;
@@ -101,7 +104,43 @@ const Cart = () => {
                   </dd>
                 </div>
               </dl>
-              <CheckoutBtn products={cartProduct} />
+
+              {showAddressForm ? (
+                <ShippingAddressForm
+                  onAddressSubmit={(address) => {
+                    setShippingAddress(address);
+                    setShowAddressForm(false);
+                  }}
+                />
+              ) : (
+                <div className="mt-6">
+                  <div className="bg-gray-100 p-4 rounded-md mb-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-900">Shipping to:</h3>
+                        <p className="mt-1 text-sm text-gray-600">{shippingAddress?.fullName}</p>
+                        <p className="mt-1 text-sm text-gray-600">{shippingAddress?.addressLine1}</p>
+                        {shippingAddress?.addressLine2 && (
+                          <p className="text-sm text-gray-600">{shippingAddress?.addressLine2}</p>
+                        )}
+                        <p className="text-sm text-gray-600">
+                          {shippingAddress?.city}, {shippingAddress?.state} {shippingAddress?.postalCode}
+                        </p>
+                        <p className="text-sm text-gray-600">{shippingAddress?.country}</p>
+                        <p className="text-sm text-gray-600">{shippingAddress?.phoneNumber}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddressForm(true)}
+                        className="text-sm font-medium text-red-600 hover:text-red-500"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                  <RazorpayCheckoutBtn products={cartProduct} shippingAddress={shippingAddress} />
+                </div>
+              )}
             </section>
           </div>
         </>
@@ -111,7 +150,7 @@ const Cart = () => {
             Shopping Cart
           </h1>
           <p className="text-lg max-w-[600px] text-center text-gray-600 tracking-wide leading-6">
-            Your cart is empty. 
+            Your cart is empty.
           </p>
           <Link
             to={"/product"}

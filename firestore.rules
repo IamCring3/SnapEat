@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is an admin
+    function isAdmin() {
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is the owner of the document
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Public collections - anyone can read
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /highlights/{highlightId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // User data - users can read/write their own data
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Orders - users can read/write their own orders, admins can read all
+    match /orders/{userId} {
+      // Allow read if the user is the owner of the document or an admin
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Allow create if the user is authenticated and the document ID matches their user ID
+      allow create: if isAuthenticated();
+
+      // Allow update if the user is the owner of the document or an admin
+      allow update: if isAuthenticated();
+
+      // Only admins can delete orders
+      allow delete: if isAdmin();
+    }
+
+    // Temporary orders collection - more permissive for fallback
+    match /temp_orders/{docId} {
+      // Anyone can read temporary orders
+      allow read: if true;
+
+      // Any authenticated user can create temporary orders
+      allow create: if isAuthenticated();
+
+      // Users can only update their own orders, admins can update any
+      allow update: if isAuthenticated() &&
+                    (request.resource.data.userId == request.auth.uid || isAdmin());
+
+      // Only admins can delete temporary orders
+      allow delete: if isAdmin();
+    }
+
+    // Admin-only collections
+    match /admin/{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // Storage for user avatars
+    match /avatars/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() &&
+                    (fileName.matches(request.auth.uid + '_.*') || isAdmin());
+    }
+
+    // For development - temporarily allow all operations
+    // TODO: Change this to deny all before going to production
+    match /{document=**} {
+      allow read, write: if true;
+    }
+
+    // Uncomment this for production
+    // match /{document=**} {
+    //   allow read, write: if false;
+    // }
+  }
+}

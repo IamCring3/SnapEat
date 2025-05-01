@@ -9,7 +9,9 @@
   },
   "scripts": {
     "start": "nodemon index.mjs",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "create-admin": "node createAdminUser.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "vercel-build": "echo 'No build needed for admin API'"
   },
   "keywords": [],
   "author": "",
@@ -18,9 +20,10 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "stripe": "^16.1.0"
+    "firebase": "^10.14.1",
+    "razorpay": "^2.9.6"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.9"
   }
 }

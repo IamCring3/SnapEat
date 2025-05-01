@@ -6,7 +6,7 @@ const checkConfig = (server: string): Config | {} => {
   switch (server) {
     case "production":
       config = {
-        baseUrl: "https://snapeat1-ck1mx1435-iamcring3s-projects.vercel.app/",
+        baseUrl: "https://admin.snapeat247.com",
       };
       break;
     case "local":
@@ -20,5 +20,5 @@ const checkConfig = (server: string): Config | {} => {
   return config;
 };
 
-export const selectServer = "local"; // or "local"
+export const selectServer = "production";// or "local"
 export const config = checkConfig(selectServer) as Config;

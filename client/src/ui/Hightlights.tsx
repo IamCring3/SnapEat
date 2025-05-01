@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Container from "./Container";
 import { getData } from "../lib";
 import { config } from "../../config";
@@ -28,15 +28,15 @@ const Hightlights = () => {
           className="relative h-60 rounded-lg shadow-md cursor-pointer overflow-hidden group"
         >
           <div
-            className="absolute inset-0 bg-cover bg-center rounded-lg transition-transform duration-300 group-hover:scale-110 filter blur-sm"
+            className="absolute inset-0 bg-cover bg-center rounded-lg transition-transform duration-300 group-hover:scale-110"
             style={{
               backgroundImage: `url(${item?.image})`,
               color: item?.color,
             }}
           ></div>
           <div
-            className="relative z-10 p-6 flex flex-col justify-between h-full text-red-600 text-2xl"
-            // Increased base font size for highlights section
+            className="relative z-10 p-6 flex flex-col justify-between h-full"
+            style={{ color: item?.color }}
           >
             <div>
               <h3 className="text-2xl font-bold max-w-44">{item?.name}</h3>

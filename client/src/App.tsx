@@ -4,8 +4,8 @@ import HomeBanner from "./ui/HomeBanner";
 import Hightlights from "./ui/Hightlights";
 import Categories from "./ui/Categories";
 import ProductList from "./ui/ProductList";
-
-
+// import DiscountedBanner from "./ui/DiscountedBanner";
+// import Blog from "./ui/Blog";
 
 function App() {
   return (
@@ -16,8 +16,10 @@ function App() {
       <Categories />
       {/* ProductList */}
       <ProductList />
-
-
+      {/* DiscountedBanner */}
+      {/* <DiscountedBanner /> */}
+      {/* Blog */}
+      {/* <Blog /> */}
     </main>
   );
 }

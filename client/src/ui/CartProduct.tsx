@@ -11,7 +11,7 @@ const CartProduct = ({ product }: { product: ProductProps }) => {
   const { removeFromCart } = store();
   const handleRemoveProduct = () => {
     if (product) {
-      removeFromCart(product?._id);
+      removeFromCart(String(product?._id));
       toast.success(`${product?.name.substring(0, 20)} deleted successfully!`);
     }
   };

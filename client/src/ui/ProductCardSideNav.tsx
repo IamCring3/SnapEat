@@ -2,7 +2,7 @@ import { FaRegEye } from "react-icons/fa";
 import { LuArrowLeftRight } from "react-icons/lu";
 import { ProductProps } from "../../type";
 import { store } from "../lib/store";
-import { useEffect, useState } from "react";
+
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 

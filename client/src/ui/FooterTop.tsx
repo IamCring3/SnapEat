@@ -1,4 +1,4 @@
-import React from "react";
+// import React from "react";
 import Container from "./Container";
 
 const FooterTop = () => {
@@ -6,21 +6,21 @@ const FooterTop = () => {
     {
       name: "Free shipping",
       imageSrc:
-        "https://tailwindui.com/img/ecommerce/icons/icon-shipping-simple.svg",
+        "https://img.icons8.com/?size=100&id=cCYzXtgW3Tgc&format=png&color=000000",
       description:
         "It's not actually free we just price it into the products. Someone's paying for it, and it's not us.",
     },
     {
       name: "10-year warranty",
       imageSrc:
-        "https://tailwindui.com/img/ecommerce/icons/icon-warranty-simple.svg",
+        "https://img.icons8.com/?size=100&id=57927&format=png&color=000000",
       description:
         "If it breaks in the first 10 years we'll replace it. After that you're on your own though.",
     },
     {
       name: "Exchanges",
       imageSrc:
-        "https://tailwindui.com/img/ecommerce/icons/icon-exchange-simple.svg",
+        "https://img.icons8.com/?size=100&id=114524&format=png&color=000000",
       description:
         "If you don't like it, trade it to one of your friends for something of theirs. Don't send it here though.",
     },

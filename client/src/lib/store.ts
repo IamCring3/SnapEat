@@ -4,18 +4,6 @@ import { persist } from "zustand/middleware";
 import { db } from "./firebase";
 import { ProductProps, UserTypes } from "../../type";
 
-interface CartProduct extends ProductProps {
-  quantity: number;
-}
-
-interface UserType {
-  firstName: string;
-  lastName: string;
-  password: string;
-  email: string;
-  avatar: string;
-  id: string;
-}
 
 interface StoreType {
   // user
@@ -60,28 +48,38 @@ export const store = create<StoreType>()(
       compareProducts: [],
 
       getUserInfo: async (uid: any) => {
-        if (!uid) return set({ currentUser: null, isLoading: false });
+        if (!uid) {
+          console.log("No UID provided to getUserInfo");
+          return set({ currentUser: null, isLoading: false });
+        }
 
-        const docRef = doc(db, "users", uid);
-        const docSnap = await getDoc(docRef);
+        console.log("Getting user info for UID:", uid);
 
         try {
+          const docRef = doc(db, "users", uid);
+          console.log("Attempting to fetch user document from Firestore");
+          const docSnap = await getDoc(docRef);
+
           if (docSnap.exists()) {
+            console.log("User document found:", docSnap.data());
             set({ currentUser: docSnap.data() as UserTypes, isLoading: false });
+          } else {
+            console.log("No user document found for UID:", uid);
+            set({ currentUser: null, isLoading: false });
           }
         } catch (error) {
-          console.log("getUserInfo error", error);
+          console.error("getUserInfo error:", error);
           set({ currentUser: null, isLoading: false });
         }
       },
       addToCart: (product) => {
         set((state) => {
           const existingProduct = state.cartProduct.find(
-            (item) => item._id === product._id
+            (item) => String(item._id) === String(product._id)
           );
           if (existingProduct) {
             const updatedProducts = state.cartProduct.map((item) =>
-              item._id === product._id
+              String(item._id) === String(product._id)
                 ? { ...item, quantity: item.quantity + 1 }
                 : item
             );
@@ -93,17 +91,17 @@ export const store = create<StoreType>()(
       decreaseQuantity: (id) => {
         set((state) => ({
           cartProduct: state.cartProduct.map((item) =>
-            item._id === id ? { ...item, quantity: item.quantity - 1 } : item
+            String(item._id) === String(id) ? { ...item, quantity: item.quantity - 1 } : item
           ),
         }));
       },
       removeFromCart: (id) => {
         set((state) => ({
-          cartProduct: state.cartProduct.filter((item) => item._id !== id),
+          cartProduct: state.cartProduct.filter((item) => String(item._id) !== String(id)),
         }));
       },
       resetCart: () => {
-        set((state) => ({
+        set(() => ({
           cartProduct: [],
         }));
       },
@@ -114,7 +112,7 @@ export const store = create<StoreType>()(
       },
       removeFromFavorite: (id) => {
         set((state) => ({
-          favoriteProduct: state.favoriteProduct.filter((item) => item._id !== id),
+          favoriteProduct: state.favoriteProduct.filter((item) => String(item._id) !== String(id)),
         }));
       },
       addToCompare: (product) => {
@@ -124,11 +122,11 @@ export const store = create<StoreType>()(
       },
       removeFromCompare: (id) => {
         set((state) => ({
-          compareProducts: state.compareProducts.filter((item) => item._id !== id),
+          compareProducts: state.compareProducts.filter((item) => String(item._id) !== String(id)),
         }));
       },
       clearCompare: () => {
-        set((state) => ({
+        set(() => ({
           compareProducts: [],
         }));
       },

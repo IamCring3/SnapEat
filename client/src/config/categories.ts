@@ -15,13 +15,13 @@ export const categories = [
     _id: '3',
     name: 'Cleaning & Disinfectants',
     _base: 'cleaning',
-    image: 'https://img.icons8.com/color/96/cleaning.png'
+    image: 'https://img.icons8.com/?size=100&id=46604&format=png&color=000000'
   },
   {
     _id: '4',
     name: 'Hair Care',
     _base: 'hairCare',
-    image: 'https://img.icons8.com/color/96/hair-care.png'
+    image: 'https://img.icons8.com/?size=100&id=PbsPpoYrw5fU&format=png&color=000000'
   },
   {
     _id: '6',
@@ -39,13 +39,13 @@ export const categories = [
     _id: '8',
     name: 'Personal Care',
     _base: 'personalCare',
-    image: 'https://img.icons8.com/color/96/personal-care.png'
+    image: 'https://img.icons8.com/?size=100&id=NVOV0aMRdsFJ&format=png&color=000000'
   },
   {
     _id: '9',
     name: 'Skin Care',
     _base: 'skinCare',
-    image: 'https://img.icons8.com/color/96/skin-care.png'
+    image: 'https://img.icons8.com/?size=100&id=yUOHnxVyYcKz&format=png&color=000000'
   },
   {
     _id: '10',

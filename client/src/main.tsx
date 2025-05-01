@@ -16,7 +16,16 @@ import Product from "./pages/Product.tsx";
 import Profile from "./pages/Profile.tsx";
 import Success from "./pages/Success.tsx";
 import Kitchen from "./pages/Kitchen.tsx";
+import AdminDashboard from "./pages/AdminDashboard.tsx";
+import AdminOrders from "./pages/AdminOrders.tsx";
+import AdminUsers from "./pages/AdminUsers.tsx";
+import AdminProducts from "./pages/AdminProducts.tsx";
+import AdminCategories from "./pages/AdminCategories.tsx";
+import AdminLogin from "./pages/AdminLogin.tsx";
+
+
 import Layout from "./ui/Layout.tsx";
+import AdminLayout from "./ui/AdminLayout.tsx";
 
 console.log("Starting app initialization...");
 
@@ -84,8 +93,39 @@ const router = createBrowserRouter([
         element: <Cancel />,
       },
       {
+        path: "/admin/login",
+        element: <AdminLogin />,
+      },
+
+      {
         path: "*",
         element: <NotFound />,
+      },
+    ],
+  },
+  {
+    path: "/admin",
+    element: <AdminLayout />,
+    children: [
+      {
+        path: "dashboard",
+        element: <AdminDashboard />,
+      },
+      {
+        path: "orders",
+        element: <AdminOrders />,
+      },
+      {
+        path: "users",
+        element: <AdminUsers />,
+      },
+      {
+        path: "products",
+        element: <AdminProducts />,
+      },
+      {
+        path: "categories",
+        element: <AdminCategories />,
       },
     ],
   },

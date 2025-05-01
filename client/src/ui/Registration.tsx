@@ -1,5 +1,4 @@
 import { useState } from "react";
-("./Login");
 import Label from "./Label";
 import { MdPhotoLibrary } from "react-icons/md";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -7,6 +6,7 @@ import { auth, db } from "../lib/firebase";
 import upload from "../lib/upload";
 import { doc, setDoc } from "firebase/firestore";
 import Login from "./Login";
+import PhoneAuthProduction from "./PhoneAuthProduction";
 
 const Registration = () => {
   const [login, setLogin] = useState(true);
@@ -16,6 +16,8 @@ const Registration = () => {
     file: null,
     url: "",
   });
+  // Only phone authentication is allowed for regular users
+  const [authMethod, setAuthMethod] = useState("phone");
 
   const handleAvatar = (e: any) => {
     if (e.target.files[0]) {
@@ -71,6 +73,8 @@ const Registration = () => {
     <div>
       {login ? (
         <Login setLogin={setLogin} />
+      ) : authMethod === "phone" ? (
+        <PhoneAuthProduction setLogin={setLogin} />
       ) : (
         <div className="bg-gray-950 rounded-lg">
           <form
@@ -85,6 +89,7 @@ const Registration = () => {
                 You need to provide required information to get register with
                 us.
               </p>
+              {/* Removed email registration option for regular users */}
             </div>
             <div className="border-b border-b-white/10 pb-5">
               <div className="mt-5 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-6">

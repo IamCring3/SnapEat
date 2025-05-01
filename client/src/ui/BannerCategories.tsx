@@ -1,4 +1,4 @@
-import React from "react";
+
 import Carousel from "react-multi-carousel";
 import { Link } from "react-router-dom";
 import CustomRightArrow from "./CustomRightArrow";
