@@ -6,7 +6,12 @@ const checkConfig = (server: string): Config | {} => {
   switch (server) {
     case "production":
       config = {
-        baseUrl: "https://admin.snapeat247.com",
+        baseUrl: "https://YOUR_CLOUD_RUN_URL", // Replace with your Cloud Run URL
+      };
+      break;
+    case "gcp":
+      config = {
+        baseUrl: "https://YOUR_CLOUD_RUN_URL", // Replace with your Cloud Run URL
       };
       break;
     case "local":
@@ -20,5 +25,5 @@ const checkConfig = (server: string): Config | {} => {
   return config;
 };
 
-export const selectServer = "production";// or "local"
+export const selectServer = "gcp"; // Change to "production", "gcp", or "local" as needed
 export const config = checkConfig(selectServer) as Config;
