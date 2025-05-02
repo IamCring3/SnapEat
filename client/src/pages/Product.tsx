@@ -33,16 +33,39 @@ const Product = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await getData(endpoint);
+
+        // Import the functions here to avoid circular dependencies
+        const { getProductsFromFirebase, getProductByIdFromFirebase } = await import('../lib/index');
+
         if (id) {
-          setProductData(data);
+          // Fetch single product from Firebase
+          const product = await getProductByIdFromFirebase(id);
+          setProductData(product || null);
           setAllProducts([]);
         } else {
+          // Fetch all products from Firebase
+          const data = await getProductsFromFirebase();
+
           // Filter out kitchen products from the product page
-        const filtered = Array.isArray(data)
-          ? data.filter((product: ProductProps) => product._base !== "kitchen" && product.pageType !== "kitchen")
-          : [];
-        setAllProducts(filtered);
+          const filtered = Array.isArray(data)
+            ? data.filter((product: ProductProps) => {
+                // Make sure we have a valid product with required properties
+                if (!product || typeof product !== 'object') {
+                  console.warn('Invalid product object:', product);
+                  return false;
+                }
+
+                // Check if product has the required properties
+                if (!product.hasOwnProperty('_base') || !product.hasOwnProperty('name') || !product.hasOwnProperty('images')) {
+                  console.warn('Product missing required properties:', product);
+                  return false;
+                }
+
+                // Filter out kitchen products
+                return product._base !== "kitchen" && product.pageType !== "kitchen";
+              })
+            : [];
+          setAllProducts(filtered);
           setProductData(null);
         }
       } catch (error) {
@@ -52,7 +75,7 @@ const Product = () => {
       }
     };
     fetchData();
-  }, [id, endpoint]);
+  }, [id]);
 
   useEffect(() => {
     if (productData && Array.isArray(productData.images) && productData.images.length > 0) {

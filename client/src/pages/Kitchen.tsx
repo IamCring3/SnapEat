@@ -32,10 +32,16 @@ const Kitchen = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await getData(endpoint);
+
+        // Import the functions here to avoid circular dependencies
+        const { getProductsFromFirebase, getProductByIdFromFirebase } = await import('../lib/index');
+
         if (id) {
-          if (data?._base === "kitchen" || data?.pageType === "kitchen") {
-            setProductData(data);
+          // Fetch single product from Firebase
+          const product = await getProductByIdFromFirebase(id);
+
+          if (product && (product._base === "kitchen" || product.pageType === "kitchen")) {
+            setProductData(product);
             setAllProducts([]);
           } else {
             // If not a kitchen product, show empty state
@@ -43,10 +49,27 @@ const Kitchen = () => {
             setAllProducts([]);
           }
         } else {
+          // Fetch all products from Firebase
+          const data = await getProductsFromFirebase();
+
           // Filter only kitchen products
-          const kitchenProducts = Array.isArray(data) ? data.filter((product: ProductProps) => 
-            product._base === "kitchen" || product.pageType === "kitchen"
-          ) : [];
+          const kitchenProducts = Array.isArray(data) ? data.filter((product: ProductProps) => {
+            // Make sure we have a valid product with required properties
+            if (!product || typeof product !== 'object') {
+              console.warn('Invalid product object:', product);
+              return false;
+            }
+
+            // Check if product has the required properties
+            if (!product.hasOwnProperty('_base') || !product.hasOwnProperty('name') || !product.hasOwnProperty('images')) {
+              console.warn('Product missing required properties:', product);
+              return false;
+            }
+
+            // Filter only kitchen products
+            return product._base === "kitchen" || product.pageType === "kitchen";
+          }) : [];
+
           setAllProducts(kitchenProducts);
           setProductData(null);
         }
@@ -59,7 +82,7 @@ const Kitchen = () => {
       }
     };
     fetchData();
-  }, [id, endpoint]);
+  }, [id]);
 
   useEffect(() => {
     if (productData?.images && productData.images.length > 0) {
@@ -231,4 +254,4 @@ const Kitchen = () => {
   );
 };
 
-export default Kitchen; 
+export default Kitchen;

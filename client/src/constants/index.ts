@@ -21,8 +21,7 @@ export const categories = [
     description:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis repellendus dolore.",
     _base: "oralCare",
-    ,
-  colors: ["black"] as [string]
+    colors: ["black"] as [string]
 },
   {
     _id: 1002,
@@ -31,8 +30,7 @@ export const categories = [
     description:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis repellendus dolore.",
     _base: "babyCare",
-    ,
-  colors: ["black"] as [string]
+    colors: ["black"] as [string]
 },
   {
     _id: 1003,
@@ -41,8 +39,7 @@ export const categories = [
     description:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis repellendus dolore.",
     _base: "beverages",
-    ,
-  colors: ["black"] as [string]
+    colors: ["black"] as [string]
 },
   {
     _id: 1004,
@@ -51,8 +48,7 @@ export const categories = [
     description:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis repellendus dolore.",
     _base: "cleaningDisinfectant",
-    ,
-  colors: ["black"] as [string]
+    colors: ["black"] as [string]
 },
   {
     _id: 1005,
@@ -61,8 +57,7 @@ export const categories = [
     description:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis repellendus dolore.",
     _base: "hairCare",
-    ,
-  colors: ["black"] as [string]
+    colors: ["black"] as [string]
 },
   {
     _id: 1006,
@@ -71,8 +66,7 @@ export const categories = [
     description:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis repellendus dolore.",
     _base: "homeCare",
-    ,
-  colors: ["black"] as [string]
+    colors: ["black"] as [string]
 },
 
   {
@@ -82,8 +76,7 @@ export const categories = [
     description:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis repellendus dolore.",
     _base: "personalCare",
-    ,
-  colors: ["black"] as [string]
+    colors: ["black"] as [string]
 },
   {
     _id: 1009,
@@ -92,8 +85,7 @@ export const categories = [
     description:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis repellendus dolore.",
     _base: "skinCare",
-    ,
-  colors: ["black"] as [string]
+    colors: ["black"] as [string]
 },
   {
     _id: 1010,
@@ -102,8 +94,7 @@ export const categories = [
     description:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis repellendus dolore.",
     _base: "stationary",
-    ,
-  colors: ["black"] as [string]
+    colors: ["black"] as [string]
 },
 
   {
@@ -113,8 +104,7 @@ export const categories = [
     description: "Delicious food items including fried rice, noodles, and various meat dishes.",
     _base: "kitchen",
     isKitchenPage: true,
-    ,
-  colors: ["black"] as [string]
+    colors: ["black"] as [string]
 },
 ];
 
@@ -127,8 +117,7 @@ export const highlightsProducts = [
     image: "https://i.ibb.co/S73fs9fm/petbanner.webp",
     _base: "/product",
     color: "#000000",
-    ,
-  colors: ["black"] as [string]
+    colors: ["black"] as [string]
 },
   {
     _id: 3002,
@@ -138,8 +127,7 @@ export const highlightsProducts = [
     image: "https://i.ibb.co/TD7MTBgm/61489237316811-Y3-Jvc-Cw0-MDUs-Mz-E3-LDAs-MA.jpg",
     _base: "/category/babyCare",
     color: "#000000",
-    ,
-  colors: ["black"] as [string]
+    colors: ["black"] as [string]
 },
   {
     _id: 3003,
@@ -149,8 +137,7 @@ export const highlightsProducts = [
     image: "https://i.ibb.co/0pMWpgkM/pharmacy-banner.jpg",
     _base: "/product",
     color: "#000000",
-    ,
-  colors: ["black"] as [string]
+    colors: ["black"] as [string]
 },
 ];
 
@@ -172,9 +159,8 @@ export const products = [
     isNew: true,
     overView: "Cleaning Liquid",
     _base: cat?.cleaningDisinfectant,
-    pageType: "cleaning"
-    ,
-  colors: ["black"] as [string]
+    pageType: "cleaning",
+    colors: ["black"] as [string]
 },
   {
     _id: 2101,
@@ -192,9 +178,8 @@ export const products = [
     isNew: true,
     overView: "Surface Cleaner",
     _base: cat?.cleaningDisinfectant,
-    pageType: "cleaning"
-    ,
-  colors: ["black"] as [string]
+    pageType: "cleaning",
+    colors: ["black"] as [string]
 },
   {
     _id: 2102,
@@ -212,9 +197,8 @@ export const products = [
     isNew: true,
     overView: "Toilet Cleaner",
     _base: cat?.cleaningDisinfectant,
-    pageType: "cleaning"
-    ,
-  colors: ["black"] as [string]
+    pageType: "cleaning",
+    colors: ["black"] as [string]
 },
   {
     _id: 2103,
@@ -232,9 +216,8 @@ export const products = [
     isNew: true,
     overView: "Laundry",
     _base: cat?.cleaningDisinfectant,
-    pageType: "cleaning"
-    ,
-  colors: ["black"] as [string]
+    pageType: "cleaning",
+    colors: ["black"] as [string]
 },
   {
     _id: 2104,
@@ -252,9 +235,8 @@ export const products = [
     isNew: true,
     overView: "Dishwash Bar",
     _base: cat?.cleaningDisinfectant,
-    pageType: "cleaning"
-    ,
-  colors: ["black"] as [string]
+    pageType: "cleaning",
+    colors: ["black"] as [string]
 },
   {
     _id: 2105,
@@ -272,9 +254,8 @@ export const products = [
     isNew: true,
     overView: "Dishwash Bar",
     _base: cat?.cleaningDisinfectant,
-    pageType: "cleaning"
-    ,
-  colors: ["black"] as [string]
+    pageType: "cleaning",
+    colors: ["black"] as [string]
 },
   {
     _id: 2106,
@@ -292,9 +273,8 @@ export const products = [
     isNew: true,
     overView: "Washing Powder",
     _base: cat?.cleaningDisinfectant,
-    pageType: "cleaning"
-    ,
-  colors: ["black"] as [string]
+    pageType: "cleaning",
+    colors: ["black"] as [string]
 },
   // --- CSV IMPORTED PRODUCTS END ---
   {
@@ -313,9 +293,8 @@ export const products = [
     isNew: true,
     overView: "Hand Wash",
     _base: cat?.cleaningDisinfectant,
-    pageType: "cleaning"
-    ,
-  colors: ["black"] as [string]
+    pageType: "cleaning",
+    colors: ["black"] as [string]
 },
   {
     _id: 2108,
@@ -333,9 +312,8 @@ export const products = [
     isNew: true,
     overView: "Hand Wash Refiller",
     _base: cat?.cleaningDisinfectant,
-    pageType: "cleaning"
-    ,
-  colors: ["black"] as [string]
+    pageType: "cleaning",
+    colors: ["black"] as [string]
 },
   {
     _id: 2109,
@@ -353,9 +331,8 @@ export const products = [
     isNew: true,
     overView: "Glass Cleaner",
     _base: cat?.cleaningDisinfectant,
-    pageType: "cleaning"
-    ,
-  colors: ["black"] as [string]
+    pageType: "cleaning",
+    colors: ["black"] as [string]
 },
   {
     _id: 2110,
@@ -373,9 +350,8 @@ export const products = [
     isNew: true,
     overView: "Soap",
     _base: cat?.personalCare,
-    pageType: "personalCare"
-    ,
-  colors: ["black"] as [string]
+    pageType: "personalCare",
+    colors: ["black"] as [string]
 },
   // Add more products as needed
   {
@@ -383,7 +359,7 @@ export const products = [
     name: "Pork Fried Rice",
     images: [
       "https://i.ibb.co/PsQbvfyY/Pork-Fried-Rice.jpg",
-      
+
     ],
     description: "Delicious pork fried rice made with fresh ingredients and authentic spices.",
     regularPrice: 190,
@@ -398,9 +374,8 @@ export const products = [
     isNew: true,
     _base: cat?.kitchen,
     isKitchenOnly: true,
-    pageType: "kitchen"
-    ,
-  colors: ["black"] as [string]
+    pageType: "kitchen",
+    colors: ["black"] as [string]
 },
   {
     _id: 2027,

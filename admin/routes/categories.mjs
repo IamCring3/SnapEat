@@ -9,13 +9,48 @@ router.get("/categories", (req, res) => {
 
 router.get("/categories/:id", (req, res) => {
   const id = req.params.id;
-  const matchedProducts = products?.filter((item) => item?._base === id);
 
-  if (!matchedProducts || matchedProducts.length === 0) {
-    return res
-      .status(404)
-      .json({ message: "No products matched with this category" });
-  }
+  // Simple approach: match products by category name or _base
+  const matchedProducts = products.filter((item) => {
+    // Match by _base (exact or case-insensitive)
+    if (item._base === id ||
+        (typeof item._base === 'string' && item._base.toLowerCase() === id.toLowerCase())) {
+      return true;
+    }
+
+    // Match by category name for specific categories
+    if (id === "beverages" && item.category === "Beverages") {
+      return true;
+    }
+    if (id === "babyCare" && item.category === "Baby Care") {
+      return true;
+    }
+    if (id === "hairCare" && item.category === "Hair Care") {
+      return true;
+    }
+    if (id === "personalCare" && item.category === "Personal Care") {
+      return true;
+    }
+    if (id === "skinCare" && item.category === "Skin Care") {
+      return true;
+    }
+    if (id === "homeCare" && item.category === "Home Care") {
+      return true;
+    }
+    if (id === "oralCare" && item.category === "Oral Care") {
+      return true;
+    }
+    if (id === "cleaningDisinfectant" && item.category === "Cleaning & Disinfectants") {
+      return true;
+    }
+    if (id === "stationary" && item.category === "Stationary") {
+      return true;
+    }
+
+    return false;
+  });
+
+  // Return the products (even if it's an empty array)
   res.json(matchedProducts);
 });
 

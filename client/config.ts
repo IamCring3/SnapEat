@@ -11,7 +11,7 @@ const checkConfig = (server: string): Config | {} => {
       break;
     case "gcp":
       config = {
-        baseUrl: "https://YOUR_CLOUD_RUN_URL", // Replace with your Cloud Run URL
+        baseUrl: "http://localhost:8000", // Using local server for now
       };
       break;
     case "local":
@@ -20,10 +20,15 @@ const checkConfig = (server: string): Config | {} => {
       };
       break;
     default:
+      // Default to local if no valid server is specified
+      config = {
+        baseUrl: "http://localhost:8000",
+      };
       break;
   }
   return config;
 };
 
-export const selectServer = "gcp"; // Change to "production", "gcp", or "local" as needed
+// Set to "local" to ensure we're using the local server
+export const selectServer = "local";
 export const config = checkConfig(selectServer) as Config;

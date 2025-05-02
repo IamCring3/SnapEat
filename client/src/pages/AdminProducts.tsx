@@ -43,9 +43,109 @@ const AdminProducts = () => {
     _base: "",
   });
 
+  // Define handleAddProduct function before useEffect
+  const handleAddProduct = (categoryParam = "") => {
+    setSelectedProduct(null);
+
+    // Map of category IDs to their display names and _base values
+    const categoryMap = {
+      "beverages": { name: "Beverages", base: "beverages" },
+      "babyCare": { name: "Baby Care", base: "babyCare" },
+      "hairCare": { name: "Hair Care", base: "hairCare" },
+      "personalCare": { name: "Personal Care", base: "personalCare" },
+      "skinCare": { name: "Skin Care", base: "skinCare" },
+      "homeCare": { name: "Home Care", base: "homeCare" },
+      "oralCare": { name: "Oral Care", base: "oralCare" },
+      "cleaningDisinfectant": { name: "Cleaning & Disinfectants", base: "cleaningDisinfectant" },
+      "stationary": { name: "Stationary", base: "stationary" }
+    };
+
+    // Map of category names to their _base values
+    const categoryNameToBase = {
+      "Beverages": "beverages",
+      "Baby Care": "babyCare",
+      "Hair Care": "hairCare",
+      "Personal Care": "personalCare",
+      "Skin Care": "skinCare",
+      "Home Care": "homeCare",
+      "Oral Care": "oralCare",
+      "Cleaning & Disinfectants": "cleaningDisinfectant",
+      "Stationary": "stationary"
+    };
+
+    let defaultCategory = "";
+    let baseValue = "";
+
+    if (categoryParam) {
+      // Check if the parameter matches a known category ID
+      if (categoryMap[categoryParam]) {
+        defaultCategory = categoryMap[categoryParam].name;
+        baseValue = categoryMap[categoryParam].base;
+      } else {
+        // Format the category parameter for display
+        defaultCategory = categoryParam
+          .replace(/([a-z])([A-Z])/g, "$1 $2") // Convert camelCase to spaces
+          .replace(/(^\w|\s\w)/g, m => m.toUpperCase()); // Capitalize first letter of each word
+
+        // Check if the formatted name matches a known category
+        if (categoryNameToBase[defaultCategory]) {
+          baseValue = categoryNameToBase[defaultCategory];
+        } else {
+          // Use the parameter as is for the base value
+          baseValue = categoryParam;
+        }
+      }
+    } else {
+      // Get the first category or use a default
+      defaultCategory = categories[0] || "Default Category";
+
+      // Check if the default category has a known base value
+      if (categoryNameToBase[defaultCategory]) {
+        baseValue = categoryNameToBase[defaultCategory];
+      } else {
+        // Create a base value from the category (lowercase, no spaces)
+        baseValue = defaultCategory.toLowerCase().replace(/\s+/g, '');
+      }
+    }
+
+    setNewProduct({
+      name: "",
+      description: "",
+      regularPrice: 0,
+      discountedPrice: 0,
+      category: defaultCategory,
+      brand: "",
+      isStock: true,
+      isNew: true,
+      rating: 4.0,
+      reviews: 0,
+      quantity: 1,
+      overView: "",
+      colors: ["black"],
+      images: [""],
+      _base: baseValue, // Set a default base value derived from the category
+      pageType: baseValue, // Set pageType to match _base by default
+    });
+    setProductImages([]);
+    setImageUrls([]);
+    setIsModalOpen(true);
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+
+    // Check if there's a category parameter in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryParam = urlParams.get('category');
+
+    if (categoryParam) {
+      console.log(`Category parameter found in URL: ${categoryParam}`);
+      // Wait a bit for categories to load, then open the add product modal
+      setTimeout(() => {
+        handleAddProduct(categoryParam);
+      }, 1000);
+    }
   }, []);
 
   const fetchProducts = async () => {
@@ -113,6 +213,7 @@ const AdminProducts = () => {
 
   const fetchCategories = async () => {
     try {
+      // First try to get categories from Firestore
       const categoriesCollection = collection(db, "categories");
       const categoriesSnapshot = await getDocs(categoriesCollection);
       let categoriesData: string[] = [];
@@ -125,53 +226,49 @@ const AdminProducts = () => {
             categoriesData.push(data.name);
           }
         });
-      } else {
-        // Use fallback data if Firestore is empty
+
+        console.log("Categories loaded from Firestore:", categoriesData);
+      }
+
+      // If no categories found in Firestore or the array is empty, use fallback data
+      if (categoriesSnapshot.empty || categoriesData.length === 0) {
         console.log("No categories found in Firestore, using fallback data");
+
+        // Use the categories from constants file
         categoriesData = fallbackCategories.map(category => category.name);
+        console.log("Fallback categories:", categoriesData);
 
         // Save fallback data to Firestore
         for (const category of fallbackCategories) {
           try {
             await setDoc(doc(db, "categories", category._id.toString()), category);
+            console.log(`Saved category to Firestore: ${category.name}`);
           } catch (error) {
             console.error("Error saving fallback category to Firestore:", error);
           }
         }
       }
 
+      // Make sure we have at least one category
+      if (categoriesData.length === 0) {
+        categoriesData = ["Default Category"];
+        toast.warning("Using default category as no categories were found");
+      }
+
+      // Sort categories alphabetically for better UX
+      categoriesData.sort();
+
       setCategories(categoriesData);
+      console.log("Categories set in state:", categoriesData);
     } catch (error) {
       console.error("Error fetching categories:", error);
       toast.error("Failed to load categories");
 
       // Use fallback data if there's an error
-      setCategories(fallbackCategories.map(category => category.name));
+      const fallbackCategoryNames = fallbackCategories.map(category => category.name);
+      setCategories(fallbackCategoryNames);
+      console.log("Using fallback categories due to error:", fallbackCategoryNames);
     }
-  };
-
-  const handleAddProduct = () => {
-    setSelectedProduct(null);
-    setNewProduct({
-      name: "",
-      description: "",
-      regularPrice: 0,
-      discountedPrice: 0,
-      category: categories[0] || "",
-      brand: "",
-      isStock: true,
-      isNew: true,
-      rating: 4.0,
-      reviews: 0,
-      quantity: 1,
-      overView: "",
-      colors: ["black"],
-      images: [""],
-      _base: "",
-    });
-    setProductImages([]);
-    setImageUrls([]);
-    setIsModalOpen(true);
   };
 
   const handleEditProduct = (product: ProductProps) => {
@@ -289,6 +386,11 @@ const AdminProducts = () => {
         ...newProduct as ProductProps,
         _id: productId,
         images: imageUrls as [string],
+        // Make sure all required fields are present
+        pageType: newProduct.pageType || newProduct._base || "",
+        quantity: newProduct.quantity || 1,
+        reviews: newProduct.reviews || 0,
+        colors: newProduct.colors || ["black"],
       };
 
       // Save to Firestore
@@ -528,7 +630,40 @@ const AdminProducts = () => {
                   </label>
                   <select
                     value={newProduct.category}
-                    onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                    onChange={(e) => {
+                      const selectedCategory = e.target.value;
+
+                      // Map of category names to their _base values
+                      const categoryBaseMap = {
+                        "Beverages": "beverages",
+                        "Baby Care": "babyCare",
+                        "Hair Care": "hairCare",
+                        "Personal Care": "personalCare",
+                        "Skin Care": "skinCare",
+                        "Home Care": "homeCare",
+                        "Oral Care": "oralCare",
+                        "Cleaning & Disinfectants": "cleaningDisinfectant",
+                        "Stationary": "stationary"
+                      };
+
+                      let baseValue = '';
+
+                      // Check if we have a predefined _base for this category
+                      if (categoryBaseMap[selectedCategory]) {
+                        baseValue = categoryBaseMap[selectedCategory];
+                      } else {
+                        // Create a base value from the category (lowercase, no spaces) as fallback
+                        baseValue = selectedCategory.toLowerCase().replace(/\s+/g, '');
+                      }
+
+                      // Update category, _base, and pageType fields
+                      setNewProduct({
+                        ...newProduct,
+                        category: selectedCategory,
+                        _base: baseValue,
+                        pageType: baseValue // Set pageType to match _base by default
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     required
                   >
@@ -590,14 +725,33 @@ const AdminProducts = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Base Category
+                    Base Category (Auto-generated)
                   </label>
                   <input
                     type="text"
                     value={newProduct._base}
                     onChange={(e) => setNewProduct({ ...newProduct, _base: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                    placeholder="Will be auto-generated from category"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    This field is automatically set based on the category, but you can modify it if needed.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Page Type
+                  </label>
+                  <input
+                    type="text"
+                    value={newProduct.pageType || ""}
+                    onChange={(e) => setNewProduct({ ...newProduct, pageType: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., beverages, kitchen, cleaning"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Used for routing to specific pages. Usually same as base category.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
