@@ -16,6 +16,15 @@ export interface CategoryProps {
   description: string;
 }
 
+export interface ProductVariation {
+  id: string;
+  name: string;
+  regularPrice: number;
+  discountedPrice: number;
+  isStock: boolean;
+  quantity?: number;
+}
+
 export interface ProductProps {
   options?: string[];
   _id: number;
@@ -36,6 +45,8 @@ export interface ProductProps {
   brand: string;
   pageType?: string;
   isKitchenOnly?: boolean;
+  variations?: ProductVariation[];
+  selectedVariation?: string;
 }
 
 export interface BlogProps {

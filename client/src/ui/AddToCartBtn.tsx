@@ -22,7 +22,16 @@ const AddToCartBtn = ({
   const { addToCart, cartProduct, decreaseQuantity, removeFromCart } = store();
 
   useEffect(() => {
-    const availableItem = cartProduct.find((item) => item?._id === product?._id);
+    // Find product in cart, considering variations
+    const availableItem = cartProduct.find((item) => {
+      if (product?.selectedVariation) {
+        // For products with variations, match both product ID and variation ID
+        return item?._id === product?._id && item?.selectedVariation === product?.selectedVariation;
+      } else {
+        // For products without variations, just match product ID
+        return item?._id === product?._id && !item?.selectedVariation;
+      }
+    });
     setExistingProduct(availableItem || null);
   }, [product, cartProduct]);
 
@@ -37,11 +46,16 @@ const AddToCartBtn = ({
 
   const handleDeleteProduct = () => {
     if (existingProduct) {
+      // Create a product ID that includes variation if present
+      const productId = existingProduct.selectedVariation
+        ? `${existingProduct._id}-${existingProduct.selectedVariation}`
+        : String(existingProduct._id);
+
       if (existingProduct?.quantity > 1) {
-        decreaseQuantity(existingProduct?._id);
+        decreaseQuantity(productId);
         toast.success(`${product?.name.substring(0, 10)} decreased successfully`);
       } else {
-        removeFromCart(existingProduct?._id);
+        removeFromCart(productId);
         toast.success(`${product?.name.substring(0, 10)} removed from cart`);
       }
     }

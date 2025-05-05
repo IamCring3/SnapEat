@@ -74,31 +74,106 @@ export const store = create<StoreType>()(
       },
       addToCart: (product) => {
         set((state) => {
-          const existingProduct = state.cartProduct.find(
-            (item) => String(item._id) === String(product._id)
-          );
+          // Create a unique key for the product based on ID and selected variation
+          const productKey = product.selectedVariation
+            ? `${product._id}-${product.selectedVariation}`
+            : String(product._id);
+
+          // Find if this exact product (with same variation if applicable) exists in cart
+          const existingProduct = state.cartProduct.find(item => {
+            const itemKey = item.selectedVariation
+              ? `${item._id}-${item.selectedVariation}`
+              : String(item._id);
+            return itemKey === productKey;
+          });
+
+          // If product has variations, get the selected variation details
+          let productToAdd = { ...product };
+          if (product.variations && product.selectedVariation) {
+            const selectedVar = product.variations.find(v => v.id === product.selectedVariation);
+            if (selectedVar) {
+              // Update price based on selected variation
+              productToAdd = {
+                ...productToAdd,
+                regularPrice: selectedVar.regularPrice,
+                discountedPrice: selectedVar.discountedPrice,
+                isStock: selectedVar.isStock
+              };
+            }
+          }
+
           if (existingProduct) {
-            const updatedProducts = state.cartProduct.map((item) =>
-              String(item._id) === String(product._id)
+            // Update quantity of existing product
+            const updatedProducts = state.cartProduct.map(item => {
+              const itemKey = item.selectedVariation
+                ? `${item._id}-${item.selectedVariation}`
+                : String(item._id);
+
+              return itemKey === productKey
                 ? { ...item, quantity: item.quantity + 1 }
-                : item
-            );
+                : item;
+            });
             return { cartProduct: updatedProducts };
           }
-          return { cartProduct: [...state.cartProduct, { ...product, quantity: 1 }] };
+
+          // Add new product to cart
+          return {
+            cartProduct: [...state.cartProduct, { ...productToAdd, quantity: 1 }]
+          };
         });
       },
       decreaseQuantity: (id) => {
-        set((state) => ({
-          cartProduct: state.cartProduct.map((item) =>
-            String(item._id) === String(id) ? { ...item, quantity: item.quantity - 1 } : item
-          ),
-        }));
+        set((state) => {
+          // Check if the ID contains a variation ID (format: productId-variationId)
+          const parts = id.toString().split('-');
+          if (parts.length > 1) {
+            // This is a product with variation
+            const productId = parts[0];
+            const variationId = parts[1];
+
+            return {
+              cartProduct: state.cartProduct.map((item) => {
+                if (String(item._id) === productId && item.selectedVariation === variationId) {
+                  return { ...item, quantity: item.quantity - 1 };
+                }
+                return item;
+              }),
+            };
+          } else {
+            // Regular product without variation
+            return {
+              cartProduct: state.cartProduct.map((item) =>
+                String(item._id) === String(id) && !item.selectedVariation
+                  ? { ...item, quantity: item.quantity - 1 }
+                  : item
+              ),
+            };
+          }
+        });
       },
       removeFromCart: (id) => {
-        set((state) => ({
-          cartProduct: state.cartProduct.filter((item) => String(item._id) !== String(id)),
-        }));
+        set((state) => {
+          // Check if the ID contains a variation ID (format: productId-variationId)
+          const parts = id.toString().split('-');
+          if (parts.length > 1) {
+            // This is a product with variation
+            const productId = parts[0];
+            const variationId = parts[1];
+
+            return {
+              cartProduct: state.cartProduct.filter(
+                (item) => !(String(item._id) === productId && item.selectedVariation === variationId)
+              ),
+            };
+          } else {
+            // Regular product without variation
+            return {
+              cartProduct: state.cartProduct.filter(
+                (item) => !(String(item._id) === String(id) && !item.selectedVariation)
+              ),
+            };
+          }
+        });
       },
       resetCart: () => {
         set(() => ({

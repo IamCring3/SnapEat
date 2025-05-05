@@ -23,6 +23,7 @@ const Product = () => {
   const [imgUrl, setImgUrl] = useState("");
   const [color, setColor] = useState("");
   const [selectedOption, setSelectedOption] = useState<string>("");
+  const [selectedVariation, setSelectedVariation] = useState<string>("");
   const { id } = useParams();
 
   const endpoint = id
@@ -117,7 +118,13 @@ const Product = () => {
                 <h2 className="text-3xl font-bold">{productData?.name}</h2>
                 <div className="flex items-center justify-between">
                   <span className="text-xl font-bold">
-                    <FormattedPrice amount={productData?.discountedPrice} />
+                    <FormattedPrice
+                      amount={
+                        productData?.variations && selectedVariation
+                          ? productData.variations.find(v => v.id === selectedVariation)?.discountedPrice || productData?.discountedPrice
+                          : productData?.discountedPrice
+                      }
+                    />
                   </span>
                   <div className="flex items-center gap-1">
                     <div className="text-base text-lightText flex items-center">
@@ -199,9 +206,46 @@ const Product = () => {
                   Category:{" "}
                   <span className="font-medium">{productData?.category}</span>
                 </p>
-                <div className="flex justify-center">
+
+                {/* Product Variations */}
+                {productData?.variations && productData.variations.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-sm font-medium text-gray-900">Size Options</h3>
+                    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {productData.variations.map((variation) => (
+                        <div
+                          key={variation.id}
+                          onClick={() => setSelectedVariation(variation.id)}
+                          className={`
+                            flex flex-col items-center justify-center border rounded-md p-2 cursor-pointer
+                            ${selectedVariation === variation.id ? 'border-primary ring-2 ring-primary' : 'border-gray-300'}
+                            ${!variation.isStock ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary'}
+                          `}
+                        >
+                          <span className="text-sm font-medium">{variation.name}</span>
+                          <span className="text-xs text-gray-500">
+                            <FormattedPrice amount={variation.discountedPrice} />
+                          </span>
+                          {variation.regularPrice > variation.discountedPrice && (
+                            <span className="text-xs line-through text-gray-400">
+                              <FormattedPrice amount={variation.regularPrice} />
+                            </span>
+                          )}
+                          {!variation.isStock && (
+                            <span className="text-xs text-red-500 mt-1">Out of stock</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-center mt-4">
                   <AddToCartBtn
-                    product={productData}
+                    product={{
+                      ...productData,
+                      selectedVariation: selectedVariation
+                    }}
                     title="Buy now"
                     className="bg-black/80 py-1.5 px-3 text-xs text-gray-200 hover:scale-100 hover:text-white duration-200 w-1/3"
                   />

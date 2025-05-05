@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db, storage } from "../lib/firebase";
+import { db, storage, auth } from "../lib/firebase";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { ProductProps } from "../../type";
 import Loading from "../ui/Loading";
@@ -41,10 +41,22 @@ const AdminProducts = () => {
     colors: ["black"] as [string],
     images: [""] as [string],
     _base: "",
+    variations: []
+  });
+
+  // State for managing variations
+  const [variations, setVariations] = useState<ProductVariation[]>([]);
+  const [newVariation, setNewVariation] = useState<ProductVariation>({
+    id: "",
+    name: "",
+    regularPrice: 0,
+    discountedPrice: 0,
+    isStock: true
   });
 
   // Define handleAddProduct function before useEffect
   const handleAddProduct = (categoryParam = "") => {
+    console.log("Add Product button clicked");
     setSelectedProduct(null);
 
     // Map of category IDs to their display names and _base values
@@ -97,7 +109,8 @@ const AdminProducts = () => {
       }
     } else {
       // Get the first category or use a default
-      defaultCategory = categories[0] || "Default Category";
+      defaultCategory = categories.length > 0 ? categories[0] : "Default Category";
+      console.log("Using default category:", defaultCategory);
 
       // Check if the default category has a known base value
       if (categoryNameToBase[defaultCategory]) {
@@ -107,6 +120,8 @@ const AdminProducts = () => {
         baseValue = defaultCategory.toLowerCase().replace(/\s+/g, '');
       }
     }
+
+    console.log("Setting up new product with category:", defaultCategory, "and base:", baseValue);
 
     setNewProduct({
       name: "",
@@ -129,6 +144,9 @@ const AdminProducts = () => {
     setProductImages([]);
     setImageUrls([]);
     setIsModalOpen(true);
+
+    // Force a re-render by updating a state variable
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -277,7 +295,53 @@ const AdminProducts = () => {
       ...product,
     });
     setImageUrls(product.images || []);
+    // Set variations if they exist
+    if (product.variations && Array.isArray(product.variations)) {
+      setVariations(product.variations);
+    } else {
+      setVariations([]);
+    }
     setIsModalOpen(true);
+  };
+
+  // Function to add a new variation
+  const handleAddVariation = () => {
+    if (!newVariation.name) {
+      toast.error("Variation name is required");
+      return;
+    }
+
+    // Generate a unique ID for the variation
+    const variationId = `var_${Date.now()}`;
+    const variationToAdd = {
+      ...newVariation,
+      id: variationId
+    };
+
+    // Add to variations array
+    setVariations([...variations, variationToAdd]);
+
+    // Reset the new variation form
+    setNewVariation({
+      id: "",
+      name: "",
+      regularPrice: 0,
+      discountedPrice: 0,
+      isStock: true
+    });
+  };
+
+  // Function to remove a variation
+  const handleRemoveVariation = (id: string) => {
+    setVariations(variations.filter(v => v.id !== id));
+  };
+
+  // Function to update variations in the product
+  const updateProductWithVariations = () => {
+    setNewProduct({
+      ...newProduct,
+      variations: variations
+    });
   };
 
   const handleDeleteProduct = (product: ProductProps) => {
@@ -381,6 +445,9 @@ const AdminProducts = () => {
       // Upload images
       const imageUrls = await uploadImages();
 
+      // Update product with current variations before saving
+      updateProductWithVariations();
+
       // Prepare product data
       const productData: ProductProps = {
         ...newProduct as ProductProps,
@@ -391,6 +458,7 @@ const AdminProducts = () => {
         quantity: newProduct.quantity || 1,
         reviews: newProduct.reviews || 0,
         colors: newProduct.colors || ["black"],
+        variations: variations
       };
 
       // Save to Firestore
@@ -432,16 +500,31 @@ const AdminProducts = () => {
   }
 
   return (
-    <div>
+    <div className="relative pb-16">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Products</h1>
         <button
-          onClick={handleAddProduct}
-          className="bg-primary text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
+          onClick={() => {
+            console.log("Add Product button clicked directly");
+            handleAddProduct();
+          }}
+          className="bg-primary text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors font-bold text-lg"
         >
-          Add Product
+          + Add Product
         </button>
       </div>
+
+      {/* Floating Action Button for Add Product */}
+      <button
+        onClick={() => {
+          console.log("Floating Add Product button clicked");
+          handleAddProduct();
+        }}
+        className="fixed bottom-8 right-8 bg-primary text-white w-16 h-16 rounded-full shadow-lg hover:bg-red-700 transition-colors flex items-center justify-center z-10"
+        aria-label="Add Product"
+      >
+        <span className="text-3xl font-bold">+</span>
+      </button>
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow-md mb-6">
@@ -835,6 +918,116 @@ const AdminProducts = () => {
                       </button>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Product Variations Section */}
+              <div className="mb-6 border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Product Variations</h3>
+
+                {/* Current Variations */}
+                {variations.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Current Variations</h4>
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead>
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Regular Price</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discounted Price</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {variations.map((variation) => (
+                            <tr key={variation.id}>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm">{variation.name}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm">₹{variation.regularPrice}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm">₹{variation.discountedPrice}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm">
+                                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                  variation.isStock ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                                }`}>
+                                  {variation.isStock ? "In Stock" : "Out of Stock"}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm">
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveVariation(variation.id)}
+                                  className="text-red-600 hover:text-red-900"
+                                >
+                                  Remove
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Add New Variation */}
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Add New Variation</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Name*</label>
+                      <input
+                        type="text"
+                        value={newVariation.name}
+                        onChange={(e) => setNewVariation({ ...newVariation, name: e.target.value })}
+                        placeholder="e.g. 1 kg, 2.5 kg"
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Regular Price*</label>
+                      <input
+                        type="number"
+                        value={newVariation.regularPrice}
+                        onChange={(e) => setNewVariation({ ...newVariation, regularPrice: parseFloat(e.target.value) })}
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                        required
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Discounted Price*</label>
+                      <input
+                        type="number"
+                        value={newVariation.discountedPrice}
+                        onChange={(e) => setNewVariation({ ...newVariation, discountedPrice: parseFloat(e.target.value) })}
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                        required
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Stock Status</label>
+                      <select
+                        value={newVariation.isStock ? "true" : "false"}
+                        onChange={(e) => setNewVariation({ ...newVariation, isStock: e.target.value === "true" })}
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                      >
+                        <option value="true">In Stock</option>
+                        <option value="false">Out of Stock</option>
+                      </select>
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        type="button"
+                        onClick={handleAddVariation}
+                        className="px-3 py-1 bg-primary text-white rounded-md text-sm hover:bg-red-700 transition-colors"
+                      >
+                        Add Variation
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 

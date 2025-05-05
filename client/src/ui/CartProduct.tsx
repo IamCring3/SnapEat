@@ -11,7 +11,12 @@ const CartProduct = ({ product }: { product: ProductProps }) => {
   const { removeFromCart } = store();
   const handleRemoveProduct = () => {
     if (product) {
-      removeFromCart(String(product?._id));
+      // Create a product ID that includes variation if present
+      const productId = product.selectedVariation
+        ? `${product._id}-${product.selectedVariation}`
+        : String(product._id);
+
+      removeFromCart(productId);
       toast.success(`${product?.name.substring(0, 20)} deleted successfully!`);
     }
   };
@@ -30,8 +35,15 @@ const CartProduct = ({ product }: { product: ProductProps }) => {
             <h3 className="text-base font-semibold w-full">
               {product?.name.substring(0, 80)}
             </h3>
+            {product.selectedVariation && product.variations && (
+              <p className="text-xs">
+                Size: <span className="font-medium">
+                  {product.variations.find(v => v.id === product.selectedVariation)?.name || ''}
+                </span>
+              </p>
+            )}
             <p className="text-xs">
-              Brand: <span className=" font-medium">{product?.brand}</span>
+              Brand: <span className="font-medium">{product?.brand}</span>
             </p>
             <p className="text-xs">
               Category: <span className="font-medium">{product?.category}</span>
