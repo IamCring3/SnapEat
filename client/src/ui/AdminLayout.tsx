@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, Link } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
@@ -64,36 +64,36 @@ const AdminLayout = () => {
         {/* Sidebar */}
         <div className="w-64 bg-white shadow-md min-h-screen p-4">
           <nav className="space-y-2">
-            <a
-              href="/admin/dashboard"
+            <Link
+              to="/admin/dashboard"
               className="block px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               Dashboard
-            </a>
-            <a
-              href="/admin/products"
+            </Link>
+            <Link
+              to="/admin/products"
               className="block px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               Products
-            </a>
-            <a
-              href="/admin/categories"
+            </Link>
+            <Link
+              to="/admin/categories"
               className="block px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               Categories
-            </a>
-            <a
-              href="/admin/orders"
+            </Link>
+            <Link
+              to="/admin/orders"
               className="block px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               Orders
-            </a>
-            <a
-              href="/admin/users"
+            </Link>
+            <Link
+              to="/admin/users"
               className="block px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               Users
-            </a>
+            </Link>
           </nav>
         </div>
 

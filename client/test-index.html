@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Test</title>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module">
+        import React from 'react';
+        import ReactDOM from 'react-dom/client';
+        
+        function TestApp() {
+          return React.createElement('div', null, [
+            React.createElement('h1', null, 'Test Application'),
+            React.createElement('p', null, 'If you can see this, React is working correctly.')
+          ]);
+        }
+        
+        const rootElement = document.getElementById('root');
+        if (rootElement) {
+          const root = ReactDOM.createRoot(rootElement);
+          root.render(React.createElement(TestApp));
+        }
+    </script>
+</body>
+</html>

@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import Loading from "../ui/Loading";
 import { FaEye, FaPhone, FaUser, FaMapMarkerAlt, FaEnvelope } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 interface OrderItem {
-  id: string;
-  title: string;
+  _id: number;
+  name: string;
   quantity: number;
   regularPrice: number;
   discountedPrice: number;
-  image: string;
+  images: [string];
 }
 
 interface ShippingAddress {
@@ -35,6 +36,7 @@ interface Order {
   shippingAddress?: ShippingAddress;
   shippingCost?: number;
   taxAmount?: number;
+  status?: string;
 }
 
 const AdminOrders = () => {
@@ -43,6 +45,7 @@ const AdminOrders = () => {
   const [filter, setFilter] = useState("all"); // all, razorpay, stripe
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -61,6 +64,10 @@ const AdminOrders = () => {
         const data = doc.data();
         if (data.orders && Array.isArray(data.orders)) {
           data.orders.forEach((order: Order) => {
+            // Set default status if not present
+            if (!order.status) {
+              order.status = "Processing";
+            }
             ordersData.push(order);
           });
         }
@@ -83,7 +90,8 @@ const AdminOrders = () => {
           userEmail: tempOrderData.userEmail,
           phoneNumber: tempOrderData.phoneNumber,
           userName: tempOrderData.userName,
-          userId: tempOrderData.userId
+          userId: tempOrderData.userId,
+          status: tempOrderData.status || "Processing"
         };
 
         ordersData.push(formattedOrder);
@@ -117,6 +125,97 @@ const AdminOrders = () => {
   const closeModal = () => {
     setShowModal(false);
     setSelectedOrder(null);
+  };
+
+  const updateOrderStatus = async (status: string) => {
+    if (!selectedOrder) return;
+
+    try {
+      setUpdatingStatus(true);
+
+      // Find the order in Firestore
+      const ordersCollection = collection(db, "orders");
+      const ordersSnapshot = await getDocs(ordersCollection);
+
+      let updated = false;
+
+      // Loop through all user order documents
+      for (const docSnapshot of ordersSnapshot.docs) {
+        const userData = docSnapshot.data();
+
+        if (userData.orders && Array.isArray(userData.orders)) {
+          // Find the specific order by paymentId
+          const orderIndex = userData.orders.findIndex(
+            (order: Order) => order.paymentId === selectedOrder.paymentId
+          );
+
+          if (orderIndex !== -1) {
+            // Update the order status
+            const updatedOrders = [...userData.orders];
+            updatedOrders[orderIndex] = {
+              ...updatedOrders[orderIndex],
+              status: status
+            };
+
+            // Update the document in Firestore
+            const docRef = doc(db, "orders", docSnapshot.id);
+            await updateDoc(docRef, { orders: updatedOrders });
+
+            // Update local state
+            setOrders(prevOrders =>
+              prevOrders.map(order =>
+                order.paymentId === selectedOrder.paymentId
+                  ? { ...order, status: status }
+                  : order
+              )
+            );
+
+            // Update selected order
+            setSelectedOrder({ ...selectedOrder, status: status });
+
+            updated = true;
+            toast.success(`Order status updated to ${status}`);
+            break;
+          }
+        }
+      }
+
+      // Also check temp_orders collection
+      if (!updated) {
+        const tempOrdersCollection = collection(db, "temp_orders");
+        const tempOrdersSnapshot = await getDocs(tempOrdersCollection);
+
+        for (const docSnapshot of tempOrdersSnapshot.docs) {
+          const orderData = docSnapshot.data();
+
+          if (orderData.paymentId === selectedOrder.paymentId) {
+            // Update the order status
+            const docRef = doc(db, "temp_orders", docSnapshot.id);
+            await updateDoc(docRef, { status: status });
+
+            // Update local state
+            setOrders(prevOrders =>
+              prevOrders.map(order =>
+                order.paymentId === selectedOrder.paymentId
+                  ? { ...order, status: status }
+                  : order
+              )
+            );
+
+            // Update selected order
+            setSelectedOrder({ ...selectedOrder, status: status });
+
+            toast.success(`Order status updated to ${status}`);
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast.error("Failed to update order status");
+    } finally {
+      setUpdatingStatus(false);
+    }
   };
 
   if (loading) {
@@ -180,6 +279,9 @@ const AdminOrders = () => {
                   Payment Method
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Items
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -216,6 +318,19 @@ const AdminOrders = () => {
                             : "bg-green-100 text-green-800"
                         }`}>
                           {order.paymentMethod}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          !order.status || order.status === "Processing"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : order.status === "Completed"
+                            ? "bg-green-100 text-green-800"
+                            : order.status === "Cancelled"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-blue-100 text-blue-800"
+                        }`}>
+                          {order.status || "Processing"}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -270,7 +385,24 @@ const AdminOrders = () => {
                     <p><span className="font-medium">Order ID:</span> {selectedOrder.paymentId}</p>
                     <p><span className="font-medium">Date:</span> {new Date(selectedOrder.orderDate).toLocaleString()}</p>
                     <p><span className="font-medium">Payment Method:</span> {selectedOrder.paymentMethod}</p>
-                    <p><span className="font-medium">Status:</span> <span className="text-green-600 font-medium">Completed</span></p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="font-medium">Status:</span>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={selectedOrder.status || "Processing"}
+                          onChange={(e) => updateOrderStatus(e.target.value)}
+                          disabled={updatingStatus}
+                          className="border border-gray-300 rounded px-2 py-1 text-sm"
+                        >
+                          <option value="Processing">Processing</option>
+                          <option value="Shipped">Shipped</option>
+                          <option value="Delivered">Delivered</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                        {updatingStatus && <span className="text-xs text-gray-500">Updating...</span>}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -343,16 +475,16 @@ const AdminOrders = () => {
                           <tr key={index}>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center">
-                                {item.image && (
+                                {item.images && item.images[0] && (
                                   <img
-                                    src={item.image}
-                                    alt={item.title}
+                                    src={item.images[0]}
+                                    alt={item.name}
                                     className="h-10 w-10 object-cover rounded-md mr-3"
                                   />
                                 )}
                                 <div>
-                                  <div className="text-sm font-medium text-gray-900">{item.title}</div>
-                                  <div className="text-xs text-gray-500">ID: {item.id}</div>
+                                  <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                                  <div className="text-xs text-gray-500">ID: {item._id}</div>
                                 </div>
                               </div>
                             </td>

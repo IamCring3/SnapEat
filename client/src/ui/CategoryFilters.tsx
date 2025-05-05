@@ -1,28 +1,52 @@
 import { useEffect, useState } from "react";
-import { config } from "../../config";
-import { getData } from "../lib";
 import { RotatingLines } from "react-loader-spinner";
 import { CategoryProps } from "../../type";
 import { Link } from "react-router-dom";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { categories as fallbackCategories } from "../constants/index";
 
 const CategoryFilters = ({ id }: { id: string | undefined }) => {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<CategoryProps[]>([]);
   const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    const fetchData = async () => {
-      const endpoint = `${config?.baseUrl}/categories`;
+    const fetchCategories = async () => {
       try {
         setLoading(true);
-        const data = await getData(endpoint);
-        setCategories(data);
+        console.log("Fetching categories from Firebase");
+
+        // Fetch categories from Firestore
+        const categoriesCollection = collection(db, "categories");
+        const categoriesSnapshot = await getDocs(categoriesCollection);
+        let categoriesData: CategoryProps[] = [];
+
+        // Check if we have categories in Firestore
+        if (!categoriesSnapshot.empty) {
+          categoriesSnapshot.forEach((doc) => {
+            const data = doc.data() as CategoryProps;
+            categoriesData.push({
+              ...data,
+              _id: parseInt(doc.id),
+            });
+          });
+          console.log(`Found ${categoriesData.length} categories in Firebase`);
+        } else {
+          console.log("No categories found in Firebase, using fallback data");
+          categoriesData = fallbackCategories;
+        }
+
+        setCategories(categoriesData);
       } catch (error) {
-        console.error("Error fetching data", error);
+        console.error("Error fetching categories:", error);
+        console.log("Using fallback categories due to error");
+        setCategories(fallbackCategories);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchCategories();
   }, []);
   return (
     <div className="hidden md:inline-flex flex-col gap-6">
