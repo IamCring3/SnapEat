@@ -1,33 +1,30 @@
 {
   "version": 2,
-  "buildCommand": "cd client && npm install && npm run build",
-  "outputDirectory": "client/dist",
-  "framework": "vite",
+  "builds": [
+    {
+      "src": "client/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist",
+        "buildCommand": "npm run build"
+      }
+    },
+    {
+      "src": "admin/index.mjs",
+      "use": "@vercel/node"
+    }
+  ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/admin/index.mjs"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1",
-      "headers": {
-        "cache-control": "public, max-age=31536000, immutable"
-      }
-    },
-    {
-      "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|gif|webp|svg|woff|woff2|ttf|eot))",
-      "dest": "/$1"
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/client/dist/index.html"
     }
-  ],
-  "functions": {
-    "admin/index.mjs": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  }
+  ]
 }
