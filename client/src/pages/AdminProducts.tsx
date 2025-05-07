@@ -185,7 +185,16 @@ const AdminProducts = () => {
       } else {
         // Use fallback data if Firestore is empty
         console.log("No products found in Firestore, using fallback data");
-        productsData = fallbackProducts;
+        // Ensure fallback products match the ProductProps type
+        productsData = fallbackProducts.map(product => ({
+          ...product,
+          _base: product._base || "",
+          colors: product.colors || ["black"],
+          images: product.images || [""],
+          isStock: product.isStock !== undefined ? product.isStock : true,
+          isNew: product.isNew !== undefined ? product.isNew : false,
+          overView: product.overView || "",
+        })) as ProductProps[];
 
         // Save fallback data to Firestore
         for (const product of fallbackProducts) {
