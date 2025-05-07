@@ -1,18 +1,27 @@
 {
-  "dependencies": {
-    "@expo/vector-icons": "^14.1.0",
-    "@react-native-async-storage/async-storage": "^2.1.2",
-    "@react-navigation/bottom-tabs": "^7.3.10",
-    "@react-navigation/native": "^7.1.6",
-    "@react-navigation/native-stack": "^7.3.10",
-    "@react-navigation/stack": "^7.2.10",
-    "expo-image-picker": "^16.0.6",
-    "react-native-gesture-handler": "^2.25.0",
-    "react-native-reanimated": "^3.17.3",
-    "react-native-safe-area-context": "^5.4.0",
-    "react-native-screens": "^4.10.0",
-    "react-native-vector-icons": "^10.2.0",
-    "typescript": "^5.3.3",
-    "@types/react": "~18.3.12"
-  }
+  "name": "snapeat",
+  "version": "1.0.0",
+  "description": "SnapEat Food Ordering Platform",
+  "private": true,
+  "workspaces": [
+    "client",
+    "admin"
+  ],
+  "scripts": {
+    "dev:client": "cd client && npm run dev",
+    "dev:admin": "cd admin && npm run start",
+    "build": "cd client && npm run build",
+    "start": "cd admin && npm run start",
+    "create-admin": "cd admin && npm run create-admin"
+  },
+  "engines": {
+    "node": ">=18.x"
+  },
+  "keywords": [
+    "food",
+    "ordering",
+    "ecommerce"
+  ],
+  "author": "",
+  "license": "ISC"
 }

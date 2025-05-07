@@ -7,8 +7,28 @@ import path from "path";
 import { readdirSync } from "fs";
 
 const port = process.env.PORT || 8000;
-app.use(cors());
-app.use(express.json());
+// Configure CORS for Vercel deployment
+const allowedOrigins = [
+  'https://snapeat.vercel.app',
+  'https://snapeat-admin.vercel.app',
+  process.env.FRONTEND_URL || 'http://localhost:3000'
+];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
+
+app.use(express.json({ limit: '10mb' }));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -85,8 +105,8 @@ app.get("/", (req, res) => {
 
       <div class="card">
         <h2>Frontend Application</h2>
-        <p>To access the SnapEat user interface, please visit: <a href="http://localhost:5173">http://localhost:5173</a></p>
-        <p>For the admin dashboard, go to: <a href="http://localhost:5173/admin/dashboard">http://localhost:5173/admin/dashboard</a></p>
+        <p>To access the SnapEat user interface, please visit: <a href="${process.env.FRONTEND_URL || 'https://snapeat.vercel.app'}">${process.env.FRONTEND_URL || 'https://snapeat.vercel.app'}</a></p>
+        <p>For the admin dashboard, go to: <a href="${process.env.FRONTEND_URL || 'https://snapeat.vercel.app'}/admin/dashboard">${process.env.FRONTEND_URL || 'https://snapeat.vercel.app'}/admin/dashboard</a></p>
       </div>
 
       <div class="card">

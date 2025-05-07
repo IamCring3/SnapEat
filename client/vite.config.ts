@@ -10,5 +10,18 @@ export default defineConfig({
     open: true,
     cors: true
   },
-  base: '/'
+  base: '/',
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    minify: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage', 'firebase/analytics', 'firebase/database'],
+        }
+      }
+    }
+  }
 })

@@ -1,3 +1,0 @@
-@echo off
-echo Starting Firebase Auth Emulator...
-npx firebase emulators:start --only auth
