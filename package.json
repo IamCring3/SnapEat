@@ -10,11 +10,11 @@
   "scripts": {
     "dev:client": "cd client && npm run dev",
     "dev:admin": "cd admin && npm run start",
-    "build": "cd client && npm run build",
+    "build": "echo 'Please use the build script in the client directory'",
     "start": "cd admin && npm run start",
     "create-admin": "cd admin && npm run create-admin",
-    "vercel-build": "npm install && npm run build",
-    "postinstall": "npm install && cd ../admin && npm install"
+    "vercel-build": "echo 'Using vercel.json build configuration'",
+    "postinstall": "echo 'Installing dependencies via vercel.json'"
   },
   "engines": {
     "node": ">=18.x"
