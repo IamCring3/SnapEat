@@ -730,7 +730,7 @@ const AdminProducts = () => {
                       const selectedCategory = e.target.value;
 
                       // Map of category names to their _base values
-                      const categoryBaseMap = {
+                      const categoryBaseMap: Record<string, string> = {
                         "Beverages": "beverages",
                         "Baby Care": "babyCare",
                         "Hair Care": "hairCare",
