@@ -9,8 +9,9 @@ import { readdirSync } from "fs";
 const port = process.env.PORT || 8000;
 // Configure CORS for Vercel deployment
 const allowedOrigins = [
-  'https://snapeat.vercel.app',
-  'https://snapeat-admin.vercel.app',
+  'https://www.snapeat247.com',
+  'https://snapeat247.com',
+  'https://admin-lf80b9klm-iamcring3s-projects.vercel.app',
   process.env.FRONTEND_URL || 'http://localhost:3000'
 ];
 
@@ -105,8 +106,8 @@ app.get("/", (req, res) => {
 
       <div class="card">
         <h2>Frontend Application</h2>
-        <p>To access the SnapEat user interface, please visit: <a href="${process.env.FRONTEND_URL || 'https://snapeat.vercel.app'}">${process.env.FRONTEND_URL || 'https://snapeat.vercel.app'}</a></p>
-        <p>For the admin dashboard, go to: <a href="${process.env.FRONTEND_URL || 'https://snapeat.vercel.app'}/admin/dashboard">${process.env.FRONTEND_URL || 'https://snapeat.vercel.app'}/admin/dashboard</a></p>
+        <p>To access the SnapEat user interface, please visit: <a href="${process.env.FRONTEND_URL || 'https://www.snapeat247.com'}">${process.env.FRONTEND_URL || 'https://www.snapeat247.com'}</a></p>
+        <p>For the admin dashboard, go to: <a href="${process.env.FRONTEND_URL || 'https://www.snapeat247.com'}/admin/dashboard">${process.env.FRONTEND_URL || 'https://www.snapeat247.com'}/admin/dashboard</a></p>
       </div>
 
       <div class="card">

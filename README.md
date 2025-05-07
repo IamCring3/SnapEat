@@ -11,6 +11,10 @@ This is a monorepo containing:
 
 ## Deployment to Vercel
 
+This project is deployed as two separate Vercel projects:
+- Frontend: https://www.snapeat247.com
+- Admin API: https://admin-lf80b9klm-iamcring3s-projects.vercel.app
+
 ### Prerequisites
 
 1. A Vercel account
@@ -19,46 +23,58 @@ This is a monorepo containing:
 
 ### Environment Variables
 
-Before deploying, you need to set up environment variables in Vercel:
+The project uses the following Firebase configuration:
 
-#### For the entire project:
-
-- `FIREBASE_API_KEY`: Your Firebase API key
-- `FIREBASE_AUTH_DOMAIN`: Your Firebase auth domain
-- `FIREBASE_DATABASE_URL`: Your Firebase database URL
-- `FIREBASE_PROJECT_ID`: Your Firebase project ID
-- `FIREBASE_STORAGE_BUCKET`: Your Firebase storage bucket
-- `FIREBASE_MESSAGING_SENDER_ID`: Your Firebase messaging sender ID
-- `FIREBASE_APP_ID`: Your Firebase app ID
-- `FIREBASE_MEASUREMENT_ID`: Your Firebase measurement ID
-- `FIREBASE_PRIVATE_KEY`: Your Firebase admin private key (with quotes)
-- `FIREBASE_CLIENT_EMAIL`: Your Firebase admin client email
-- `FRONTEND_URL`: The URL of your deployed frontend
-- `RAZORPAY_KEY_ID`: Your Razorpay key ID (if using Razorpay)
-- `RAZORPAY_KEY_SECRET`: Your Razorpay key secret (if using Razorpay)
+```
+FIREBASE_API_KEY=AIzaSyBzwVTCkbbzY7disGMLqzwN9_r5znNLzNM
+FIREBASE_AUTH_DOMAIN=snapeat-2288d.firebaseapp.com
+FIREBASE_DATABASE_URL=https://snapeat-2288d-default-rtdb.firebaseio.com
+FIREBASE_PROJECT_ID=snapeat-2288d
+FIREBASE_STORAGE_BUCKET=snapeat-2288d.firebasestorage.app
+FIREBASE_MESSAGING_SENDER_ID=567797575571
+FIREBASE_APP_ID=1:567797575571:web:b44e2b034dc0a7fd510266
+FIREBASE_MEASUREMENT_ID=G-C3YVWELGN6
+```
 
 ### Deployment Steps
 
-1. **Connect your GitHub repository to Vercel**:
+#### Client Deployment
+
+1. **Deploy the client to Vercel**:
    - Go to [Vercel](https://vercel.com) and sign in
    - Click "Add New" > "Project"
    - Import your GitHub repository
    - Configure the project:
-     - Framework Preset: Other
-     - Root Directory: ./
-     - Build Command: npm run build
-     - Output Directory: client/dist
-     - Install Command: npm install
+     - Framework Preset: Vite
+     - Root Directory: `client/`
+     - Build Command: `npm run build`
+     - Output Directory: `dist`
+     - Install Command: `npm install`
 
-2. **Add Environment Variables**:
-   - In the Vercel project settings, add all the environment variables listed above
+2. **Add Environment Variables for the client**:
+   - Add all the Firebase configuration variables with the `VITE_` prefix
+   - Add `VITE_API_URL=https://admin-lf80b9klm-iamcring3s-projects.vercel.app`
 
-3. **Deploy**:
-   - Click "Deploy" and wait for the build to complete
+3. **Set up custom domain**:
+   - Configure `snapeat247.com` and `www.snapeat247.com` as custom domains
 
-4. **Verify Deployment**:
-   - Once deployed, visit your Vercel URL to ensure the application is working correctly
-   - Test the API endpoints by visiting `https://your-vercel-url.vercel.app/api/products`
+#### Admin API Deployment
+
+1. **Deploy the admin API to Vercel**:
+   - Go to [Vercel](https://vercel.com)
+   - Click "Add New" > "Project"
+   - Import the same GitHub repository
+   - Configure the project:
+     - Framework Preset: Node.js
+     - Root Directory: `admin/`
+     - Build Command: `npm run vercel-build` (or leave empty)
+     - Output Directory: (leave empty)
+     - Install Command: `npm install`
+
+2. **Add Environment Variables for the admin**:
+   - Add all the Firebase configuration variables
+   - Add `FRONTEND_URL=https://www.snapeat247.com`
+   - Add Razorpay credentials if using payment processing
 
 ## Local Development
 
@@ -72,7 +88,7 @@ Before deploying, you need to set up environment variables in Vercel:
    ```
    # Start client
    npm run dev:client
-   
+
    # Start admin server
    npm run dev:admin
    ```
