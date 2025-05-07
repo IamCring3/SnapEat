@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
-import { db, storage, auth } from "../lib/firebase";
+import { db, storage } from "../lib/firebase";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import { ProductProps } from "../../type";
+import { ProductProps, ProductVariation } from "../../type";
 import Loading from "../ui/Loading";
 import toast from "react-hot-toast";
 // Import fallback data from client constants
@@ -60,7 +60,7 @@ const AdminProducts = () => {
     setSelectedProduct(null);
 
     // Map of category IDs to their display names and _base values
-    const categoryMap = {
+    const categoryMap: Record<string, { name: string, base: string }> = {
       "beverages": { name: "Beverages", base: "beverages" },
       "babyCare": { name: "Baby Care", base: "babyCare" },
       "hairCare": { name: "Hair Care", base: "hairCare" },
@@ -73,7 +73,7 @@ const AdminProducts = () => {
     };
 
     // Map of category names to their _base values
-    const categoryNameToBase = {
+    const categoryNameToBase: Record<string, string> = {
       "Beverages": "beverages",
       "Baby Care": "babyCare",
       "Hair Care": "hairCare",
@@ -220,7 +220,8 @@ const AdminProducts = () => {
           colors: ["black"] as [string],
           _base: "sample-base",
           isStock: true,
-          isNew: true
+          isNew: true,
+          pageType: "sample"
         }
       ];
       setProducts(fallbackProducts);
@@ -270,7 +271,7 @@ const AdminProducts = () => {
       // Make sure we have at least one category
       if (categoriesData.length === 0) {
         categoriesData = ["Default Category"];
-        toast.warning("Using default category as no categories were found");
+        toast.error("Using default category as no categories were found");
       }
 
       // Sort categories alphabetically for better UX
@@ -458,7 +459,10 @@ const AdminProducts = () => {
         quantity: newProduct.quantity || 1,
         reviews: newProduct.reviews || 0,
         colors: newProduct.colors || ["black"],
-        variations: variations
+        variations: variations,
+        isStock: newProduct.isStock !== undefined ? newProduct.isStock : true,
+        isNew: newProduct.isNew !== undefined ? newProduct.isNew : false,
+        overView: newProduct.overView || ""
       };
 
       // Save to Firestore

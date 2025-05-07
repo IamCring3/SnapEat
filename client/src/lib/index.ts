@@ -63,12 +63,30 @@ export const getProductsFromFirebase = async (): Promise<ProductProps[]> => {
       return productsData;
     } else {
       console.log("No products found in Firebase, using fallback data");
-      return fallbackProducts;
+      // Ensure fallback products match the ProductProps type
+      return fallbackProducts.map(product => ({
+        ...product,
+        _base: product._base || "",
+        colors: product.colors || ["black"],
+        images: product.images || [""],
+        isStock: product.isStock !== undefined ? product.isStock : true,
+        isNew: product.isNew !== undefined ? product.isNew : false,
+        overView: product.overView || "",
+      })) as ProductProps[];
     }
   } catch (error) {
     console.error("Error fetching products from Firebase:", error);
     console.log("Using fallback data due to error");
-    return fallbackProducts;
+    // Ensure fallback products match the ProductProps type
+    return fallbackProducts.map(product => ({
+      ...product,
+      _base: product._base || "",
+      colors: product.colors || ["black"],
+      images: product.images || [""],
+      isStock: product.isStock !== undefined ? product.isStock : true,
+      isNew: product.isNew !== undefined ? product.isNew : false,
+      overView: product.overView || "",
+    })) as ProductProps[];
   }
 };
 
@@ -89,12 +107,36 @@ export const getProductByIdFromFirebase = async (id: string): Promise<ProductPro
       console.log(`Product with ID ${id} not found in Firebase`);
       // Try to find in fallback data
       const fallbackProduct = fallbackProducts.find(p => p._id.toString() === id);
-      return fallbackProduct || null;
+      if (fallbackProduct) {
+        // Ensure fallback product matches the ProductProps type
+        return {
+          ...fallbackProduct,
+          _base: fallbackProduct._base || "",
+          colors: fallbackProduct.colors || ["black"],
+          images: fallbackProduct.images || [""],
+          isStock: fallbackProduct.isStock !== undefined ? fallbackProduct.isStock : true,
+          isNew: fallbackProduct.isNew !== undefined ? fallbackProduct.isNew : false,
+          overView: fallbackProduct.overView || "",
+        } as ProductProps;
+      }
+      return null;
     }
   } catch (error) {
     console.error(`Error fetching product with ID ${id} from Firebase:`, error);
     // Try to find in fallback data
     const fallbackProduct = fallbackProducts.find(p => p._id.toString() === id);
-    return fallbackProduct || null;
+    if (fallbackProduct) {
+      // Ensure fallback product matches the ProductProps type
+      return {
+        ...fallbackProduct,
+        _base: fallbackProduct._base || "",
+        colors: fallbackProduct.colors || ["black"],
+        images: fallbackProduct.images || [""],
+        isStock: fallbackProduct.isStock !== undefined ? fallbackProduct.isStock : true,
+        isNew: fallbackProduct.isNew !== undefined ? fallbackProduct.isNew : false,
+        overView: fallbackProduct.overView || "",
+      } as ProductProps;
+    }
+    return null;
   }
 };

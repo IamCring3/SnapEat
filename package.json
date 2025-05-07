@@ -13,7 +13,8 @@
     "build": "cd client && npm run build",
     "start": "cd admin && npm run start",
     "create-admin": "cd admin && npm run create-admin",
-    "vercel-build": "cd client && npm install && npm run build"
+    "vercel-build": "cd client && npm install && npm run build",
+    "postinstall": "cd client && npm install && cd ../admin && npm install"
   },
   "engines": {
     "node": ">=18.x"
