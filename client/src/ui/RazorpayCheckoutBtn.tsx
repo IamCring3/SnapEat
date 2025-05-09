@@ -15,9 +15,10 @@ declare global {
 interface RazorpayCheckoutBtnProps {
   products: ProductProps[];
   shippingAddress?: ShippingAddressType | null;
+  codEnabled?: boolean;
 }
 
-const RazorpayCheckoutBtn = ({ products, shippingAddress }: RazorpayCheckoutBtnProps) => {
+const RazorpayCheckoutBtn = ({ products, shippingAddress, codEnabled = false }: RazorpayCheckoutBtnProps) => {
   const { currentUser } = store();
   const navigate = useNavigate();
 
@@ -37,6 +38,34 @@ const RazorpayCheckoutBtn = ({ products, shippingAddress }: RazorpayCheckoutBtnP
 
   const handleCheckout = async () => {
     try {
+      // Test server connection first
+      try {
+        console.log("Testing server connection...");
+        console.log("Using API URL:", config?.baseUrl);
+
+        // Try the test-cors endpoint
+        const testResponse = await fetch(`${config?.baseUrl}/test-cors`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        console.log("Server connection test response status:", testResponse.status);
+
+        if (testResponse.ok) {
+          const testData = await testResponse.json();
+          console.log("Server connection successful:", testData);
+        } else {
+          console.error("Server connection failed with status:", testResponse.status);
+          const errorText = await testResponse.text();
+          console.error("Error response:", errorText);
+        }
+      } catch (error) {
+        console.error("Server connection test failed:", error);
+        toast.error(`Server connection failed: ${error.message || "Unknown error"}`);
+      }
+
       // Check if shipping address is provided
       if (!shippingAddress) {
         toast.error("Please provide shipping address");
@@ -52,8 +81,38 @@ const RazorpayCheckoutBtn = ({ products, shippingAddress }: RazorpayCheckoutBtnP
       const taxAmount = 15; // Same as in Cart.tsx
       const totalAmount = subtotal + shippingCost + taxAmount;
 
+      // If Cash on Delivery is enabled, skip payment processing and create order directly
+      if (codEnabled) {
+        try {
+          toast.loading("Processing your order...", { id: "cod-order-processing" });
+
+          // Generate a unique COD order ID
+          const codOrderId = `COD_${Date.now()}`;
+
+          // Save the order with COD flag
+          // We'll redirect to success page with the COD order ID
+          setTimeout(() => {
+            toast.dismiss("cod-order-processing");
+            toast.success("Order placed successfully! Awaiting admin approval.");
+            navigate(`/success?payment_id=${codOrderId}&cod=true`);
+          }, 1500);
+
+          return;
+        } catch (error) {
+          console.error("COD order error:", error);
+          toast.error("Failed to place COD order");
+          return;
+        }
+      }
+
+      // Regular online payment flow
       // Create order on server
-      const response = await fetch(`${config?.baseUrl}/razorpay/create-order`, {
+      // Try both endpoints to see which one works
+      const endpoint = "/checkout"; // You can also try "/razorpay/create-order"
+      console.log("Attempting to create Razorpay order with URL:", `${config?.baseUrl}${endpoint}`);
+      console.log("Using config baseUrl:", config?.baseUrl);
+
+      const response = await fetch(`${config?.baseUrl}${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -69,15 +128,32 @@ const RazorpayCheckoutBtn = ({ products, shippingAddress }: RazorpayCheckoutBtnP
         }),
       });
 
+      // Log the raw response for debugging
+      console.log("Razorpay order creation response status:", response.status);
+
+      // Check if the response is ok before parsing JSON
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Razorpay order creation failed with status:", response.status);
+        console.error("Error response:", errorText);
+        throw new Error(`Failed to create order: ${response.status} ${errorText}`);
+      }
+
       const orderData = await response.json();
+      console.log("Razorpay order creation response:", orderData);
 
       if (!orderData.success) {
+        console.error("Razorpay order creation failed:", orderData);
         throw new Error(orderData.error || "Failed to create order");
       }
 
       // Initialize Razorpay
+      // Use the key from environment variables with fallback to test key
+      const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_C9xDgkosiD7b6l";
+      console.log("Using Razorpay key:", razorpayKeyId);
+
       const options = {
-        key: "rzp_test_C9xDgkosiD7b6l", // Razorpay test key
+        key: razorpayKeyId,
         amount: orderData.order.amount,
         currency: orderData.order.currency,
         name: "SnapEat",
@@ -90,7 +166,9 @@ const RazorpayCheckoutBtn = ({ products, shippingAddress }: RazorpayCheckoutBtnP
             // Show a toast to let the user know we're processing
             toast.loading("Verifying payment...", { id: "payment-verification" });
 
-            const verifyResponse = await fetch(`${config?.baseUrl}/razorpay/verify`, {
+            const verifyEndpoint = "/razorpay/verify";
+            console.log("Verifying payment with URL:", `${config?.baseUrl}${verifyEndpoint}`);
+            const verifyResponse = await fetch(`${config?.baseUrl}${verifyEndpoint}`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -163,9 +241,18 @@ const RazorpayCheckoutBtn = ({ products, shippingAddress }: RazorpayCheckoutBtnP
 
       const razorpay = new window.Razorpay(options);
       razorpay.open();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Razorpay error:", error);
-      toast.error("Payment initialization failed");
+      // Provide more detailed error message to the user
+      const errorMessage = error.message || "Unknown error occurred";
+      toast.error(`Payment initialization failed: ${errorMessage}`);
+
+      // Log additional details for debugging
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
     }
   };
 
@@ -182,7 +269,7 @@ const RazorpayCheckoutBtn = ({ products, shippingAddress }: RazorpayCheckoutBtnP
               : "bg-primary hover:!bg-white hover:text-red-600 hover:border-red-600"
           }`}
         >
-          Pay with UPI
+          {codEnabled ? "Place Order (Cash on Delivery)" : "Pay with UPI"}
         </button>
       ) : (
         <button className="w-full text-base text-white text-center rounded-md border border-transparent bg-gray-500 px-4 py-3 cursor-not-allowed">

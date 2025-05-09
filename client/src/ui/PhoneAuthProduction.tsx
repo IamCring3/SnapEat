@@ -27,6 +27,7 @@ const PhoneAuthProduction = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isRegistering, setIsRegistering] = useState(false); // Toggle between login and registration
+  const [recaptchaVerified, setRecaptchaVerified] = useState(false); // Track if reCAPTCHA is verified
   const [userInfo, setUserInfo] = useState({
     firstName: "",
     lastName: "",
@@ -42,8 +43,83 @@ const PhoneAuthProduction = () => {
     }
   });
 
-  // Clean up reCAPTCHA on component unmount
+  // Initialize reCAPTCHA when component mounts and clean up on unmount
   useEffect(() => {
+    // Initialize reCAPTCHA when component mounts
+    const initializeRecaptcha = () => {
+      console.log("Initializing reCAPTCHA on component mount");
+
+      // Log Firebase auth state for debugging
+      console.log("Firebase Auth current user:", auth.currentUser);
+      console.log("Firebase Auth current language code:", auth.languageCode);
+      console.log("Firebase Auth settings:", {
+        appVerificationDisabledForTesting: auth.settings.appVerificationDisabledForTesting
+      });
+
+      // Clear any existing reCAPTCHA first
+      if (window.recaptchaVerifier) {
+        try {
+          console.log("Clearing existing reCAPTCHA verifier");
+          window.recaptchaVerifier.clear();
+          window.recaptchaVerifier = null;
+        } catch (e) {
+          console.error("Error clearing existing reCAPTCHA:", e);
+        }
+      }
+
+      try {
+        console.log("Creating new reCAPTCHA verifier with configuration:", {
+          size: 'normal',
+          isolated: true,
+          languageCode: 'en'
+        });
+
+        // Create a new reCAPTCHA verifier with improved configuration
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'normal',
+          callback: (response) => {
+            console.log("reCAPTCHA verified successfully with response token:", response);
+            // Set the verified state to true
+            setRecaptchaVerified(true);
+            toast.success("Security check completed! You can now proceed.");
+          },
+          'expired-callback': () => {
+            console.log("reCAPTCHA expired");
+            toast.error("Security check expired. Please solve it again.");
+            // Reset the verified state
+            setRecaptchaVerified(false);
+
+            // Re-initialize the reCAPTCHA
+            setTimeout(() => {
+              initializeRecaptcha();
+            }, 500);
+          },
+          // Add these additional parameters to improve reliability
+          'isolated': true, // Use isolated mode for better compatibility
+          'hl': 'en' // Set language to English
+        });
+      } catch (initError) {
+        console.error("ERROR INITIALIZING RECAPTCHA:", initError);
+        console.error("Error details:", {
+          message: initError.message,
+          code: initError.code,
+          stack: initError.stack
+        });
+      }
+
+      // Render the reCAPTCHA
+      try {
+        window.recaptchaVerifier.render();
+        console.log("reCAPTCHA rendered successfully");
+      } catch (error) {
+        console.error("Error rendering reCAPTCHA:", error);
+      }
+    };
+
+    // Initialize reCAPTCHA
+    initializeRecaptcha();
+
+    // Clean up on component unmount
     return () => {
       if (window.recaptchaVerifier) {
         try {
@@ -57,7 +133,7 @@ const PhoneAuthProduction = () => {
   }, []);
 
   // Send verification code
-  const sendVerificationCode = async () => {
+  const sendVerificationCode = async (useInvisibleRecaptcha = false) => {
     try {
       setLoading(true);
       setError("");
@@ -69,22 +145,35 @@ const PhoneAuthProduction = () => {
 
       console.log("Sending verification code to:", formattedPhoneNumber);
 
-      // IMPORTANT: Always clear any existing reCAPTCHA first
-      if (window.recaptchaVerifier) {
+      // Check if reCAPTCHA is already initialized
+      if (!window.recaptchaVerifier) {
+        console.log("reCAPTCHA not initialized, creating a new one");
+
+        // Create a new reCAPTCHA verifier with the appropriate size
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: useInvisibleRecaptcha ? 'invisible' : 'normal',
+          callback: (response) => {
+            console.log("reCAPTCHA verified:", response);
+            setRecaptchaVerified(true);
+            toast.success("Security check completed!");
+          },
+          'expired-callback': () => {
+            console.log("reCAPTCHA expired");
+            setRecaptchaVerified(false);
+          },
+          'isolated': true,
+          'hl': 'en'
+        });
+
         try {
-          window.recaptchaVerifier.clear();
-          window.recaptchaVerifier = null;
-        } catch (e) {
-          console.error("Error clearing existing reCAPTCHA:", e);
+          await window.recaptchaVerifier.render();
+          console.log("reCAPTCHA rendered successfully");
+        } catch (renderError) {
+          console.error("Error rendering reCAPTCHA:", renderError);
         }
       }
 
-      // Create a new reCAPTCHA verifier - SIMPLEST POSSIBLE IMPLEMENTATION
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible' // Using invisible for better user experience
-      });
-
-      console.log("Created new reCAPTCHA verifier");
+      console.log("Using reCAPTCHA verifier, type:", useInvisibleRecaptcha ? "invisible" : "normal");
 
       // Send verification code with the newly created verifier
       const confirmationResult = await signInWithPhoneNumber(
@@ -102,40 +191,67 @@ const PhoneAuthProduction = () => {
       setStep(2);
       toast.success("Verification code sent!");
     } catch (error: any) {
-      console.error("Error sending verification code:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
+      // Log detailed error information to console for debugging
+      console.error("FIREBASE ERROR DETAILS:");
+      console.error("Error object:", error);
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
+      console.error("Full error JSON:", JSON.stringify(error, null, 2));
 
-      // Get error message
-      let errorMessage = "Failed to send verification code";
-
-      if (error.code) {
-        console.log("Error code:", error.code);
-
-        // Simple error mapping
-        const errorMessages = {
-          'auth/invalid-phone-number': "Invalid phone number format. Please include country code (e.g., +1234567890)",
-          'auth/missing-phone-number': "Please enter a phone number",
-          'auth/quota-exceeded': "SMS quota exceeded. Please try again later.",
-          'auth/captcha-check-failed': "reCAPTCHA verification failed. Please try again with a different browser or device.",
-          'auth/operation-not-allowed': "Phone authentication is not enabled. Please contact support.",
-          'auth/too-many-requests': "Too many verification attempts. Please try again after some time or use a different phone number.",
-          'auth/invalid-app-credential': "reCAPTCHA verification failed. This usually happens when Firebase can't verify your domain. Try using a different phone number or contact support.",
-          'auth/network-request-failed': "Network error. Please check your internet connection and try again.",
-          'auth/argument-error': "Invalid argument provided to Firebase. Please check your phone number format."
-        };
-
-        errorMessage = errorMessages[error.code as keyof typeof errorMessages] || `Error: ${error.message || error.code}`;
-      } else if (error.message) {
-        errorMessage = error.message;
+      if (error.code === 'auth/invalid-app-credential') {
+        console.error("SPECIFIC ERROR: Invalid app credential - This typically means the reCAPTCHA verification failed");
       }
 
-      // Special handling for common errors
-      if (error.code === 'auth/invalid-app-credential') {
-        // This error often happens when the reCAPTCHA verification fails
-        errorMessage = "Verification failed. Please try a different phone number or browser.";
+      if (error.code === 'auth/captcha-check-failed') {
+        console.error("SPECIFIC ERROR: Captcha check failed - The reCAPTCHA response token was invalid");
+      }
+
+      // Simple user-facing error message
+      let errorMessage = "Failed to send verification code. Please try again.";
+
+      // Only show specific error messages for certain errors
+      if (error.code === 'auth/invalid-phone-number') {
+        errorMessage = "Invalid phone number format. Please include country code (e.g., +1234567890)";
       } else if (error.code === 'auth/too-many-requests') {
         errorMessage = "Too many attempts. Please try again later or use a different phone number.";
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = "Network error. Please check your internet connection and try again.";
       }
+
+      // Reset reCAPTCHA state
+      setRecaptchaVerified(false);
+
+      // Re-initialize reCAPTCHA with a delay
+      setTimeout(() => {
+        try {
+          if (window.recaptchaVerifier) {
+            window.recaptchaVerifier.clear();
+            window.recaptchaVerifier = null;
+          }
+
+          // Create a new reCAPTCHA verifier with invisible size for retry
+          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            size: 'invisible',
+            callback: (response) => {
+              console.log("Invisible reCAPTCHA verified:", response);
+              setRecaptchaVerified(true);
+            },
+            'expired-callback': () => {
+              console.log("reCAPTCHA expired");
+              setRecaptchaVerified(false);
+            },
+            'isolated': true
+          });
+
+          try {
+            window.recaptchaVerifier.render();
+          } catch (renderError) {
+            console.error("Error rendering reCAPTCHA:", renderError);
+          }
+        } catch (recaptchaError) {
+          console.error("Error re-initializing reCAPTCHA:", recaptchaError);
+        }
+      }, 1000);
 
       // Always clear reCAPTCHA on error
       if (window.recaptchaVerifier) {
@@ -235,8 +351,15 @@ const PhoneAuthProduction = () => {
       }, 500);
 
     } catch (error: any) {
-      console.error("Error verifying code:", error);
-      setError(error.message || "Failed to verify code");
+      // Log detailed error information to console for debugging
+      console.error("FIREBASE VERIFICATION ERROR DETAILS:");
+      console.error("Error object:", error);
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
+      console.error("Full error JSON:", JSON.stringify(error, null, 2));
+
+      // Simple user-facing error message
+      setError("Failed to verify code. Please try again.");
       toast.error("Failed to verify code");
     } finally {
       setLoading(false);
@@ -251,6 +374,12 @@ const PhoneAuthProduction = () => {
     try {
       // Clear any previous errors
       setError("");
+
+      // Check if reCAPTCHA is initialized
+      if (!window.recaptchaVerifier) {
+        setError("Security check not loaded. Please refresh the page and try again.");
+        return;
+      }
 
       // Validate user information if registering
       if (isRegistering) {
@@ -296,11 +425,46 @@ const PhoneAuthProduction = () => {
         return;
       }
 
-      // Send verification code
-      await sendVerificationCode();
+      // Try sending verification code with normal reCAPTCHA first
+      try {
+        await sendVerificationCode(false);
+      } catch (verificationError: any) {
+        console.error("Error with normal reCAPTCHA, trying invisible:", verificationError);
+
+        // If the first attempt fails with specific errors, try with invisible reCAPTCHA
+        if (verificationError.code === 'auth/invalid-app-credential' ||
+            verificationError.code === 'auth/captcha-check-failed') {
+
+          // Clear existing reCAPTCHA
+          if (window.recaptchaVerifier) {
+            try {
+              window.recaptchaVerifier.clear();
+              window.recaptchaVerifier = null;
+            } catch (e) {
+              console.error("Error clearing reCAPTCHA:", e);
+            }
+          }
+
+          toast.info("Trying alternative verification method...");
+
+          // Try with invisible reCAPTCHA
+          await sendVerificationCode(true);
+        } else {
+          // Re-throw other errors
+          throw verificationError;
+        }
+      }
     } catch (error: any) {
-      console.error("Error in phone submit:", error);
-      setError(error.message || "An unexpected error occurred");
+      // Log detailed error information to console for debugging
+      console.error("PHONE SUBMIT ERROR DETAILS:");
+      console.error("Error object:", error);
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
+      console.error("Full error stack:", error.stack);
+      console.error("Full error JSON:", JSON.stringify(error, null, 2));
+
+      // Simple user-facing error message
+      setError("Failed to process your request. Please try again.");
       toast.error("Failed to process your request. Please try again.");
     }
   };
@@ -325,8 +489,6 @@ const PhoneAuthProduction = () => {
 
   return (
     <div className="bg-gray-950 rounded-lg">
-      {/* Invisible reCAPTCHA container */}
-      <div id="recaptcha-container"></div>
       {/* Info message about verification */}
       <div className="bg-blue-900 text-white p-3 rounded-t-lg text-sm">
         <p className="font-bold">Phone Verification</p>
@@ -540,16 +702,36 @@ const PhoneAuthProduction = () => {
           </div>
 
           {error && (
-            <p className="bg-white/90 text-red-600 text-center py-1 rounded-md tracking-wide font-semibold mt-4">
+            <p className="bg-white/90 text-red-600 text-center py-2 rounded-md tracking-wide font-semibold mt-4">
               {error}
             </p>
           )}
+
+          {/* reCAPTCHA container - positioned before the submit button */}
+          <div className="mt-6 mb-4">
+            <div className={`p-3 rounded-md mb-3 ${recaptchaVerified ? 'bg-green-900' : 'bg-gray-800'} transition-colors duration-300`}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-white">
+                  <span className="font-bold">Security Check:</span> {recaptchaVerified
+                    ? "Completed! You can now proceed."
+                    : "Please complete the reCAPTCHA below before proceeding"}
+                </p>
+                {recaptchaVerified && (
+                  <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                    ✓ Verified
+                  </span>
+                )}
+              </div>
+              <div id="recaptcha-container" className="flex justify-center"></div>
+            </div>
+          </div>
 
           <button
             type="submit"
             disabled={
               loading ||
               !phoneNumber ||
+              !recaptchaVerified || // Disable if reCAPTCHA is not verified
               (isRegistering && (
                 !userInfo.firstName ||
                 !userInfo.lastName ||
@@ -559,9 +741,10 @@ const PhoneAuthProduction = () => {
                 !userInfo.address.postalCode
               ))
             }
-            className="mt-5 bg-primary w-full py-2 uppercase text-base font-bold tracking-wide text-white rounded-md hover:!bg-white hover:text-red-600 hover:border-2 hover:border-red-600 duration-300 ease-in disabled:bg-gray-500 disabled:hover:bg-gray-500 disabled:hover:text-white disabled:hover:border-transparent"
+            className={`mt-3 w-full py-2 uppercase text-base font-bold tracking-wide text-white rounded-md hover:!bg-white hover:text-red-600 hover:border-2 hover:border-red-600 duration-300 ease-in disabled:bg-gray-500 disabled:hover:bg-gray-500 disabled:hover:text-white disabled:hover:border-transparent
+              ${recaptchaVerified ? 'bg-primary animate-pulse' : 'bg-gray-500'}`}
           >
-            {loading ? "Sending..." : "Send Verification Code"}
+            {loading ? "Sending..." : recaptchaVerified ? "Send Verification Code" : "Complete Security Check Above"}
           </button>
         </form>
       ) : (
@@ -596,7 +779,7 @@ const PhoneAuthProduction = () => {
           </div>
 
           {error && (
-            <p className="bg-white/90 text-red-600 text-center py-1 rounded-md tracking-wide font-semibold mt-4">
+            <p className="bg-white/90 text-red-600 text-center py-2 rounded-md tracking-wide font-semibold mt-4">
               {error}
             </p>
           )}
@@ -607,6 +790,45 @@ const PhoneAuthProduction = () => {
               onClick={() => {
                 setStep(1);
                 setError("");
+                // Reset reCAPTCHA state when going back
+                setRecaptchaVerified(false);
+
+                // Re-initialize reCAPTCHA
+                if (window.recaptchaVerifier) {
+                  try {
+                    window.recaptchaVerifier.clear();
+                    window.recaptchaVerifier = null;
+                  } catch (e) {
+                    console.error("Error clearing reCAPTCHA:", e);
+                  }
+                }
+
+                // Re-initialize after a short delay
+                setTimeout(() => {
+                  const initializeRecaptcha = () => {
+                    window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                      size: 'normal',
+                      callback: (response) => {
+                        console.log("reCAPTCHA verified:", response);
+                        setRecaptchaVerified(true);
+                        toast.success("Security check completed! You can now proceed.");
+                      },
+                      'expired-callback': () => {
+                        console.log("reCAPTCHA expired");
+                        toast.error("Security check expired. Please solve it again.");
+                        setRecaptchaVerified(false);
+                      }
+                    });
+
+                    try {
+                      window.recaptchaVerifier.render();
+                    } catch (error) {
+                      console.error("Error rendering reCAPTCHA:", error);
+                    }
+                  };
+
+                  initializeRecaptcha();
+                }, 500);
               }}
               className="bg-gray-700 w-1/2 py-2 uppercase text-base font-bold tracking-wide text-white rounded-md hover:bg-gray-600 duration-300 ease-in"
             >
@@ -630,6 +852,45 @@ const PhoneAuthProduction = () => {
           onClick={() => {
             setIsRegistering(!isRegistering);
             setError("");
+            // Reset reCAPTCHA state when switching between login and registration
+            setRecaptchaVerified(false);
+
+            // Re-initialize reCAPTCHA
+            if (window.recaptchaVerifier) {
+              try {
+                window.recaptchaVerifier.clear();
+                window.recaptchaVerifier = null;
+              } catch (e) {
+                console.error("Error clearing reCAPTCHA:", e);
+              }
+            }
+
+            // Re-initialize after a short delay
+            setTimeout(() => {
+              const initializeRecaptcha = () => {
+                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                  size: 'normal',
+                  callback: (response) => {
+                    console.log("reCAPTCHA verified:", response);
+                    setRecaptchaVerified(true);
+                    toast.success("Security check completed! You can now proceed.");
+                  },
+                  'expired-callback': () => {
+                    console.log("reCAPTCHA expired");
+                    toast.error("Security check expired. Please solve it again.");
+                    setRecaptchaVerified(false);
+                  }
+                });
+
+                try {
+                  window.recaptchaVerifier.render();
+                } catch (error) {
+                  console.error("Error rendering reCAPTCHA:", error);
+                }
+              };
+
+              initializeRecaptcha();
+            }, 500);
           }}
           className="text-gray-200 font-semibold underline underline-offset-2 decoration-[1px] hover:text-red-600 duration-300 ease-in"
         >

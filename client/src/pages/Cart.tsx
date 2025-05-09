@@ -7,12 +7,14 @@ import RazorpayCheckoutBtn from "../ui/RazorpayCheckoutBtn";
 import Container from "../ui/Container";
 import FormattedPrice from "../ui/FormattedPrice";
 import ShippingAddressForm, { ShippingAddressType } from "../ui/ShippingAddressForm";
+import { Switch } from "@headlessui/react";
 
 const Cart = () => {
   const [totalAmt, setTotalAmt] = useState({ regular: 0, discounted: 0 });
   const { cartProduct, currentUser } = store();
   const [shippingAddress, setShippingAddress] = useState<ShippingAddressType | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(true);
+  const [codEnabled, setCodEnabled] = useState(false);
 
   const shippingAmt = 25;
   const taxAmt = 15;
@@ -138,7 +140,38 @@ const Cart = () => {
                       </button>
                     </div>
                   </div>
-                  <RazorpayCheckoutBtn products={cartProduct} shippingAddress={shippingAddress} />
+                  {/* Cash on Delivery Option */}
+                  <div className="mt-4 mb-4 border-t border-gray-200 pt-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Switch
+                          checked={codEnabled}
+                          onChange={setCodEnabled}
+                          className={`${
+                            codEnabled ? 'bg-primary' : 'bg-gray-300'
+                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
+                        >
+                          <span
+                            className={`${
+                              codEnabled ? 'translate-x-6' : 'translate-x-1'
+                            } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                          />
+                        </Switch>
+                        <span className="ml-3 text-sm font-medium text-gray-900">Cash on Delivery</span>
+                      </div>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {codEnabled
+                        ? "You'll pay when your order is delivered. Admin approval required."
+                        : "Enable to pay cash when your order is delivered."}
+                    </p>
+                  </div>
+
+                  <RazorpayCheckoutBtn
+                    products={cartProduct}
+                    shippingAddress={shippingAddress}
+                    codEnabled={codEnabled}
+                  />
                 </div>
               )}
             </section>

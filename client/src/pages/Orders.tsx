@@ -72,7 +72,9 @@ const Orders = () => {
               userEmail: tempOrderData.userEmail,
               phoneNumber: tempOrderData.phoneNumber,
               userName: tempOrderData.userName,
-              userId: tempOrderData.userId
+              userId: tempOrderData.userId,
+              cod: tempOrderData.cod,
+              status: tempOrderData.status
             };
 
             allOrders.push(formattedOrder);
@@ -158,9 +160,27 @@ const Orders = () => {
                               <p className="text-gray-600">
                                 Payment Status:{" "}
                                 <span className="text-black font-medium">
-                                  Paid by {order?.paymentMethod === 'razorpay' ? 'Razorpay' : 'Stripe'}
+                                  {order?.paymentMethod === 'cod'
+                                    ? 'Cash on Delivery'
+                                    : `Paid by ${order?.paymentMethod === 'razorpay' ? 'Razorpay' : 'Online Payment'}`}
                                 </span>
                               </p>
+                              {order?.status && (
+                                <p className="text-gray-600">
+                                  Order Status:{" "}
+                                  <span className={`font-medium ${
+                                    order.status === "Pending Approval"
+                                      ? "text-purple-700"
+                                      : order.status === "Completed"
+                                        ? "text-green-700"
+                                        : order.status === "Cancelled"
+                                          ? "text-red-700"
+                                          : "text-blue-700"
+                                  }`}>
+                                    {order.status}
+                                  </span>
+                                </p>
+                              )}
                               <p className="text-gray-600">
                                 Order Amount:{" "}
                                 <span className="text-black font-medium">

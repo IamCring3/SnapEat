@@ -37,12 +37,13 @@ interface Order {
   shippingCost?: number;
   taxAmount?: number;
   status?: string;
+  cod?: boolean;
 }
 
 const AdminOrders = () => {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filter, setFilter] = useState("all"); // all, razorpay, stripe
+  const [filter, setFilter] = useState("all"); // all, razorpay, stripe, cod
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -115,7 +116,9 @@ const AdminOrders = () => {
 
   const filteredOrders = filter === "all"
     ? orders
-    : orders.filter(order => order.paymentMethod === filter);
+    : filter === "cod"
+      ? orders.filter(order => order.cod === true)
+      : orders.filter(order => order.paymentMethod === filter);
 
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
@@ -248,15 +251,16 @@ const AdminOrders = () => {
           >
             Razorpay
           </button>
+
           <button
-            onClick={() => setFilter("stripe")}
+            onClick={() => setFilter("cod")}
             className={`px-4 py-2 rounded-md text-sm font-medium ${
-              filter === "stripe"
+              filter === "cod"
                 ? "bg-primary text-white"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
           >
-            Stripe
+            Cash on Delivery
           </button>
         </div>
       </div>
@@ -315,9 +319,11 @@ const AdminOrders = () => {
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           order.paymentMethod === "razorpay"
                             ? "bg-blue-100 text-blue-800"
-                            : "bg-green-100 text-green-800"
+                            : order.paymentMethod === "cod"
+                              ? "bg-orange-100 text-orange-800"
+                              : "bg-green-100 text-green-800"
                         }`}>
-                          {order.paymentMethod}
+                          {order.cod ? "Cash on Delivery" : order.paymentMethod}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -328,6 +334,8 @@ const AdminOrders = () => {
                             ? "bg-green-100 text-green-800"
                             : order.status === "Cancelled"
                             ? "bg-red-100 text-red-800"
+                            : order.status === "Pending Approval"
+                            ? "bg-purple-100 text-purple-800"
                             : "bg-blue-100 text-blue-800"
                         }`}>
                           {order.status || "Processing"}
@@ -384,7 +392,10 @@ const AdminOrders = () => {
                   <div className="space-y-2">
                     <p><span className="font-medium">Order ID:</span> {selectedOrder.paymentId}</p>
                     <p><span className="font-medium">Date:</span> {new Date(selectedOrder.orderDate).toLocaleString()}</p>
-                    <p><span className="font-medium">Payment Method:</span> {selectedOrder.paymentMethod}</p>
+                    <p><span className="font-medium">Payment Method:</span> {selectedOrder.cod ? "Cash on Delivery" : selectedOrder.paymentMethod}</p>
+                    {selectedOrder.cod && (
+                      <p className="text-orange-600 font-medium">This is a Cash on Delivery order</p>
+                    )}
                     <div className="flex items-center gap-2 mt-2">
                       <span className="font-medium">Status:</span>
                       <div className="flex items-center gap-2">
@@ -394,11 +405,21 @@ const AdminOrders = () => {
                           disabled={updatingStatus}
                           className="border border-gray-300 rounded px-2 py-1 text-sm"
                         >
-                          <option value="Processing">Processing</option>
-                          <option value="Shipped">Shipped</option>
-                          <option value="Delivered">Delivered</option>
-                          <option value="Completed">Completed</option>
-                          <option value="Cancelled">Cancelled</option>
+                          {selectedOrder.cod && selectedOrder.status === "Pending Approval" ? (
+                            <>
+                              <option value="Pending Approval">Pending Approval</option>
+                              <option value="Approved">Approve Order</option>
+                              <option value="Rejected">Reject Order</option>
+                            </>
+                          ) : (
+                            <>
+                              <option value="Processing">Processing</option>
+                              <option value="Shipped">Shipped</option>
+                              <option value="Delivered">Delivered</option>
+                              <option value="Completed">Completed</option>
+                              <option value="Cancelled">Cancelled</option>
+                            </>
+                          )}
                         </select>
                         {updatingStatus && <span className="text-xs text-gray-500">Updating...</span>}
                       </div>

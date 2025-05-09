@@ -25,7 +25,20 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 // Initialize analytics only if supported (prevents errors in SSR/Vercel environment)
 export const analytics = isSupported().then(yes => yes ? getAnalytics(app) : null);
+
+// Initialize and configure Auth
 export const auth = getAuth(app);
+// Set persistence to LOCAL to keep the user logged in even after browser refresh
+import { browserLocalPersistence, setPersistence } from "firebase/auth";
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log("Firebase Auth persistence set to LOCAL");
+  })
+  .catch((error) => {
+    console.error("Error setting persistence:", error);
+  });
+
+// Initialize other Firebase services
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const rtdb = getDatabase(app); // Realtime Database

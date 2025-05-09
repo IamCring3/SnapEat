@@ -19,6 +19,7 @@ import Kitchen from "./pages/Kitchen.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AdminOrders from "./pages/AdminOrders.tsx";
 import AdminUsers from "./pages/AdminUsers.tsx";
+import TestApi from "./pages/TestApi.tsx";
 import AdminProducts from "./pages/AdminProducts.tsx";
 import AdminCategories from "./pages/AdminCategories.tsx";
 import AdminLogin from "./pages/AdminLogin.tsx";
@@ -91,6 +92,10 @@ const router = createBrowserRouter([
       {
         path: "/cancel",
         element: <Cancel />,
+      },
+      {
+        path: "/test-api",
+        element: <TestApi />,
       },
       {
         path: "/admin/login",

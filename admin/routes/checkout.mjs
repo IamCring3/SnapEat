@@ -16,6 +16,8 @@ const razorpay = new Razorpay({
 // Create order endpoint
 router.post("/checkout", async (req, res) => {
   try {
+    console.log("Received checkout request:", req.body);
+
     const {
       items,
       email,
@@ -29,10 +31,12 @@ router.post("/checkout", async (req, res) => {
     // Calculate total amount if not provided
     let totalAmount = amount;
     if (!totalAmount) {
+      console.log("Amount not provided, calculating from items:", items);
       totalAmount = items.reduce(
         (sum, item) => sum + (item.discountedPrice || item.price) * (item.quantity || 1) * 100,
         0
       );
+      console.log("Calculated total amount:", totalAmount);
     }
 
     // Create Razorpay order
@@ -49,16 +53,37 @@ router.post("/checkout", async (req, res) => {
       },
     };
 
-    const order = await razorpay.orders.create(options);
+    console.log("Creating Razorpay order with options:", options);
+    console.log("Using Razorpay credentials - Key ID:", RAZORPAY_KEY_ID);
 
-    res.json({
-      message: "Order created successfully",
-      success: true,
-      order: order,
-    });
+    try {
+      const order = await razorpay.orders.create(options);
+      console.log("Razorpay order created successfully:", order);
+
+      res.json({
+        message: "Order created successfully",
+        success: true,
+        order: order,
+      });
+    } catch (razorpayError) {
+      console.error("Razorpay API error:", razorpayError);
+      res.status(500).json({
+        error: `Razorpay API error: ${razorpayError.message}`,
+        success: false
+      });
+    }
   } catch (error) {
     console.error("Razorpay order creation error:", error);
-    res.status(500).json({ error: error.message });
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    res.status(500).json({
+      error: error.message,
+      success: false,
+      details: "Server error during order creation"
+    });
   }
 });
 
@@ -116,6 +141,11 @@ router.post("/razorpay/verify", async (req, res) => {
     }
   } catch (error) {
     console.error("Razorpay verification error:", error);
+    console.error("Verification error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     res.status(500).json({
       success: false,
       message: "Server error during payment verification",

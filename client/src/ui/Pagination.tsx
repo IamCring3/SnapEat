@@ -48,7 +48,7 @@ const Pagination = () => {
           return;
         }
 
-        // Filter out kitchen products from the home page
+        // Filter out kitchen products and only show featured products on the home page
         const filtered = data.filter((product: ProductProps) => {
           // Make sure we have a valid product with required properties
           if (!product || typeof product !== 'object') {
@@ -62,8 +62,10 @@ const Pagination = () => {
             return false;
           }
 
-          // Filter out kitchen products
-          return product._base !== "kitchen" && product.pageType !== "kitchen";
+          // Filter out kitchen products and only include featured products
+          return product._base !== "kitchen" &&
+                 product.pageType !== "kitchen" &&
+                 product.featured === true;
         });
 
         console.log(`Filtered ${data.length} products to ${filtered.length} products`);

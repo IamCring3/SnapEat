@@ -36,6 +36,7 @@ export interface ProductProps {
   name: string;
   isStock: boolean;
   isNew: boolean;
+  featured?: boolean;
   images: [string];
   discountedPrice: number;
   regularPrice: number;
@@ -92,4 +93,6 @@ export interface OrderTypes {
   shippingAddress?: AddressType;
   shippingCost?: number;
   taxAmount?: number;
+  cod?: boolean;
+  status?: string;
 }

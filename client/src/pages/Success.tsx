@@ -10,18 +10,18 @@ import Loading from "../ui/Loading";
 const Success = () => {
   const { currentUser, cartProduct, resetCart } = store();
   const location = useLocation();
-  const sessionId = new URLSearchParams(location.search).get("session_id");
   const paymentId = new URLSearchParams(location.search).get("payment_id");
+  const isCod = new URLSearchParams(location.search).get("cod") === "true";
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    console.log("Success page loaded with sessionId:", sessionId, "paymentId:", paymentId);
+    console.log("Success page loaded with paymentId:", paymentId, "isCod:", isCod);
     console.log("Cart products:", cartProduct);
     console.log("Current user state:", currentUser);
 
-    if (!sessionId && !paymentId) {
-      console.log("No sessionId or paymentId found, redirecting to home");
+    if (!paymentId) {
+      console.log("No paymentId found, redirecting to home");
       navigate("/");
     } else if (cartProduct.length > 0) {
       console.log("Cart has products, proceeding to save order");
@@ -52,8 +52,8 @@ const Success = () => {
           const docSnap = await getDoc(orderRef);
 
           // Determine payment method and ID
-          const paymentMethod = sessionId ? "stripe" : "razorpay";
-          const finalPaymentId = sessionId || paymentId;
+          const paymentMethod = isCod ? "cod" : "razorpay";
+          const finalPaymentId = paymentId;
 
           console.log("Payment method:", paymentMethod);
           console.log("Payment ID:", finalPaymentId);
@@ -83,7 +83,9 @@ const Success = () => {
             totalAmount: cartProduct.reduce((sum, item) => sum + ((item.discountedPrice || item.regularPrice) * item.quantity), 0),
             shippingAddress: shippingAddress,
             shippingCost: 25,
-            taxAmount: 15
+            taxAmount: 15,
+            cod: isCod,
+            status: isCod ? "Pending Approval" : "Processing"
           };
 
           if (docSnap.exists()) {
@@ -146,6 +148,8 @@ const Success = () => {
                 userEmail: currentUser?.email || null,
                 phoneNumber: currentUser?.phoneNumber || null,
                 userName: `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim(),
+                cod: isCod,
+                status: isCod ? "Pending Approval" : "Processing"
               });
 
               console.log("Order saved to temporary collection");
@@ -176,7 +180,7 @@ const Success = () => {
       // Start the save order process
       saveOrder();
     }
-  }, [sessionId, paymentId, navigate, currentUser, cartProduct, resetCart]);
+  }, [paymentId, navigate, currentUser, cartProduct, resetCart, isCod]);
 
   // Function to manually check if order was saved
   const checkOrderStatus = async () => {
@@ -192,7 +196,7 @@ const Success = () => {
 
       if (docSnap.exists()) {
         const orderData = docSnap.data()?.orders || [];
-        const paymentIdentifier = sessionId || paymentId;
+        const paymentIdentifier = paymentId;
 
         // Check if the order with this payment ID exists
         const orderExists = orderData.some(
@@ -222,10 +226,16 @@ const Success = () => {
         <h2 className="text-2xl md:text-4xl font-bold text-center">
           {loading
             ? "Your order payment is processing"
-            : "Your Payment Accepted by SnapEat"}
+            : isCod
+              ? "Your Order Has Been Placed"
+              : "Your Payment Accepted by SnapEat"}
         </h2>
         <p>
-          {loading ? "Once done" : "Now"} you can view your Orders or continue
+          {loading
+            ? "Once done"
+            : isCod
+              ? "Your cash on delivery order is awaiting approval"
+              : "Now"} you can view your Orders or continue
           Shopping with us
         </p>
         <div className="flex items-center gap-x-5 flex-wrap justify-center">
