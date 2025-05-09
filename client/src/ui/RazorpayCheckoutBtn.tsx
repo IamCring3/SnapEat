@@ -109,110 +109,125 @@ const RazorpayCheckoutBtn = ({ products, shippingAddress, codEnabled = false }: 
       // Create order on server
       // Try both endpoints to see which one works
       const endpoint = "/checkout"; // You can also try "/razorpay/create-order"
-      console.log("Attempting to create Razorpay order with URL:", `${config?.baseUrl}${endpoint}`);
-      console.log("Using config baseUrl:", config?.baseUrl);
 
-      const response = await fetch(`${config?.baseUrl}${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          items: products,
-          email: currentUser?.email,
-          amount: totalAmount * 100, // Convert to smallest currency unit (paise for INR)
-          shippingAddress: shippingAddress,
-          userId: currentUser?.id,
-          userName: `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim(),
-          phoneNumber: currentUser?.phoneNumber || shippingAddress.phoneNumber,
-        }),
-      });
+      // Make sure the baseUrl doesn't have a trailing slash
+      const baseUrl = config?.baseUrl ? config.baseUrl.replace(/\/$/, '') : '';
+      console.log("Attempting to create Razorpay order with URL:", `${baseUrl}${endpoint}`);
+      console.log("Using config baseUrl:", baseUrl);
 
-      // Log the raw response for debugging
-      console.log("Razorpay order creation response status:", response.status);
-
-      // Check if the response is ok before parsing JSON
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Razorpay order creation failed with status:", response.status);
-        console.error("Error response:", errorText);
-        throw new Error(`Failed to create order: ${response.status} ${errorText}`);
-      }
-
-      const orderData = await response.json();
-      console.log("Razorpay order creation response:", orderData);
-
-      if (!orderData.success) {
-        console.error("Razorpay order creation failed:", orderData);
-        throw new Error(orderData.error || "Failed to create order");
-      }
-
-      // Initialize Razorpay
-      // Use the key from environment variables with fallback to test key
-      const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
-      console.log("Using Razorpay key:", razorpayKeyId);
-
-      // If no key is found, show an error and return
-      if (!razorpayKeyId) {
-        console.error("Razorpay key not found in environment variables");
-        toast.error("Payment configuration error. Please contact support.");
+      // Check if baseUrl is available
+      if (!baseUrl) {
+        console.error("API URL is not configured");
+        toast.error("Payment system configuration error. Please contact support.");
         return;
       }
 
-      const options = {
-        key: razorpayKeyId,
-        amount: orderData.order.amount,
-        currency: orderData.order.currency,
-        name: "SnapEat",
-        description: "Food Order Payment",
-        order_id: orderData.order.id,
-        handler: async function (response: any) {
-          // Verify payment
-          console.log("Payment response received:", response);
-          try {
-            // Show a toast to let the user know we're processing
-            toast.loading("Verifying payment...", { id: "payment-verification" });
+      try {
+        const response = await fetch(`${baseUrl}${endpoint}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          mode: "cors", // Explicitly set CORS mode
+          credentials: "include", // Include credentials if needed
+          body: JSON.stringify({
+            items: products,
+            email: currentUser?.email,
+            amount: totalAmount * 100, // Convert to smallest currency unit (paise for INR)
+            shippingAddress: shippingAddress,
+            userId: currentUser?.id,
+            userName: `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim(),
+            phoneNumber: currentUser?.phoneNumber || shippingAddress.phoneNumber,
+          }),
+        });
 
-            const verifyEndpoint = "/razorpay/verify";
-            console.log("Verifying payment with URL:", `${config?.baseUrl}${verifyEndpoint}`);
-            const verifyResponse = await fetch(`${config?.baseUrl}${verifyEndpoint}`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
+        // Log the raw response for debugging
+        console.log("Razorpay order creation response status:", response.status);
 
-            const verifyData = await verifyResponse.json();
-            console.log("Verification response:", verifyData);
+        // Check if the response is ok before parsing JSON
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Razorpay order creation failed with status:", response.status);
+          console.error("Error response:", errorText);
+          throw new Error(`Failed to create order: ${response.status} ${errorText}`);
+        }
 
-            // Dismiss the loading toast
-            toast.dismiss("payment-verification");
+        const orderData = await response.json();
+        console.log("Razorpay order creation response:", orderData);
 
-            if (verifyData.success) {
-              toast.success("Payment successful!");
+        if (!orderData.success) {
+          console.error("Razorpay order creation failed:", orderData);
+          throw new Error(orderData.error || "Failed to create order");
+        }
 
-              // Add a small delay before redirecting to ensure the toast is seen
-              // and to give the backend time to process
-              setTimeout(() => {
-                // Redirect to success page with payment ID
-                navigate(`/success?payment_id=${verifyData.paymentId}`);
-              }, 1000);
-            } else {
-              console.error("Payment verification failed:", verifyData);
-              toast.error("Payment verification failed: " + (verifyData.message || "Unknown error"));
+        // Initialize Razorpay
+        // Use the key from environment variables with fallback to test key
+        const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
+        console.log("Using Razorpay key:", razorpayKeyId);
+
+        // If no key is found, show an error and return
+        if (!razorpayKeyId) {
+          console.error("Razorpay key not found in environment variables");
+          toast.error("Payment configuration error. Please contact support.");
+          return;
+        }
+
+        const options = {
+          key: razorpayKeyId,
+          amount: orderData.order.amount,
+          currency: orderData.order.currency,
+          name: "SnapEat",
+          description: "Food Order Payment",
+          order_id: orderData.order.id,
+          handler: async function (response: any) {
+            // Verify payment
+            console.log("Payment response received:", response);
+            try {
+              // Show a toast to let the user know we're processing
+              toast.loading("Verifying payment...", { id: "payment-verification" });
+
+              const verifyEndpoint = "/razorpay/verify";
+              console.log("Verifying payment with URL:", `${baseUrl}${verifyEndpoint}`);
+              const verifyResponse = await fetch(`${baseUrl}${verifyEndpoint}`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                mode: "cors",
+                credentials: "include",
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              });
+
+              const verifyData = await verifyResponse.json();
+              console.log("Verification response:", verifyData);
+
+              // Dismiss the loading toast
+              toast.dismiss("payment-verification");
+
+              if (verifyData.success) {
+                toast.success("Payment successful!");
+
+                // Add a small delay before redirecting to ensure the toast is seen
+                // and to give the backend time to process
+                setTimeout(() => {
+                  // Redirect to success page with payment ID
+                  navigate(`/success?payment_id=${verifyData.paymentId}`);
+                }, 1000);
+              } else {
+                console.error("Payment verification failed:", verifyData);
+                toast.error("Payment verification failed: " + (verifyData.message || "Unknown error"));
+              }
+            } catch (error: any) {
+              // Dismiss the loading toast
+              toast.dismiss("payment-verification");
+
+              console.error("Error during payment verification:", error);
+              toast.error("Error verifying payment: " + (error.message || "Unknown error"));
             }
-          } catch (error: any) {
-            // Dismiss the loading toast
-            toast.dismiss("payment-verification");
-
-            console.error("Error during payment verification:", error);
-            toast.error("Error verifying payment: " + (error.message || "Unknown error"));
-          }
         },
         prefill: {
           name: shippingAddress?.fullName || `${currentUser?.firstName || ""} ${currentUser?.lastName || ""}`,
@@ -246,8 +261,12 @@ const RazorpayCheckoutBtn = ({ products, shippingAddress, codEnabled = false }: 
         },
       };
 
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
+        const razorpay = new window.Razorpay(options);
+        razorpay.open();
+      } catch (fetchError) {
+        console.error("Error fetching from API:", fetchError);
+        toast.error("Server connection failed: " + (fetchError.message || "Failed to fetch"));
+      }
     } catch (error: any) {
       console.error("Razorpay error:", error);
       // Provide more detailed error message to the user

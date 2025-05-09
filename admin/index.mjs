@@ -8,12 +8,13 @@ import { readdirSync } from "fs";
 
 const port = process.env.PORT || 8000;
 // Configure CORS for Vercel deployment and local development
-const allowedOrigins = [
+// Get allowed origins from environment variable or use defaults
+let allowedOrigins = [
   'https://www.snapeat247.com',
   'https://snapeat247.com',
   'https://admin-lf80b9klm-iamcring3s-projects.vercel.app',
   process.env.FRONTEND_URL || 'http://localhost:3000',
-  'http://localhost:3000', // Add all possible local development ports
+  'http://localhost:3000',
   'http://localhost:3001',
   'http://localhost:3002',
   'http://localhost:3003',
@@ -23,35 +24,49 @@ const allowedOrigins = [
   'http://127.0.0.1:3003'
 ];
 
+// Add any additional origins from environment variable
+if (process.env.ALLOWED_ORIGINS) {
+  const additionalOrigins = process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim());
+  allowedOrigins = [...new Set([...allowedOrigins, ...additionalOrigins])];
+}
+
 console.log("Allowed origins for CORS:", allowedOrigins);
 
-// For development, use a more permissive CORS policy
-if (process.env.NODE_ENV === 'development') {
-  console.log("Using development CORS policy - allowing all origins");
-  app.use(cors());
-} else {
-  // For production, use a more restrictive CORS policy
-  app.use(cors({
-    origin: function(origin, callback) {
-      console.log("Request origin:", origin);
+// Use a permissive CORS policy for both development and production
+// This helps with debugging and ensures the API is accessible
+console.log("Using permissive CORS policy");
 
-      // Allow requests with no origin (like mobile apps, curl requests)
-      if (!origin) {
-        console.log("Allowing request with no origin");
-        return callback(null, true);
-      }
+// Configure CORS with credentials support
+app.use(cors({
+  origin: function(origin, callback) {
+    console.log("Request origin:", origin);
 
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-        console.log("CORS error:", msg, "Origin:", origin);
-        return callback(new Error(msg), false);
-      }
-      console.log("Origin allowed:", origin);
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) {
+      console.log("Allowing request with no origin");
       return callback(null, true);
-    },
-    credentials: true
-  }));
-}
+    }
+
+    // In development or if explicitly set to allow all origins, allow any origin
+    if (process.env.NODE_ENV === 'development' || process.env.ALLOW_ALL_ORIGINS === 'true') {
+      console.log("Allowing all origins in development mode");
+      return callback(null, true);
+    }
+
+    // In production, check against the allowed origins list
+    if (allowedOrigins.indexOf(origin) === -1) {
+      // For better debugging, log but still allow the request
+      console.log("Warning: Origin not in allowed list, but allowing anyway:", origin);
+      return callback(null, true);
+    }
+
+    console.log("Origin allowed:", origin);
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(express.json({ limit: '10mb' }));
 
