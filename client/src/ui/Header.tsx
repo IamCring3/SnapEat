@@ -23,7 +23,6 @@ const bottomNavigation = [
   { title: "Home", link: "/" },
   { title: "Shop", link: "/product" },
   { title: "Kitchen", link: "/kitchen" },
-  { title: "Cart", link: "/cart" },
   { title: "Orders", link: "/orders" },
 ];
 
