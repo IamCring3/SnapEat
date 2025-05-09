@@ -10,8 +10,16 @@ const UserInfo = ({ currentUser }: UserTypes) => {
     <Container className="py-5 text-white">
       <div className="relative isolate overflow-hidden bg-gray-900 px-6 py-24 shadow-2xl sm:rounded-3xl sm:px-16">
         <div className="flex flex-col sm:flex-row items-center gap-5 sm:gap-10">
-          <FiUser className="w-40 h-40 text-gray-300" />
-          <div className="text-start flex-1">
+             <img
+            src={
+              currentUser?.avatar
+                ? currentUser?.avatar
+                : "https://i.ibb.co/mVRr1rkD/png-transparent-profile-logo-computer-icons-user-user-blue-heroes-logo.png"
+            }
+            alt="userImage"
+            className="w-40 h-40 rounded-full border border-gray-700 object-cover p-1"
+          />
+
           <div className="text-start flex-1">
             <h2 className="text-xl font-bold tracking-tight sm:text-4xl">
               Welcome back, dear{" "}
