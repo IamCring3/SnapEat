@@ -62,16 +62,33 @@ const Pagination = () => {
             return false;
           }
 
-          // Filter out kitchen and food products and only include featured products
-          return (
-            product._base !== "kitchen" &&
-            product.pageType !== "kitchen" &&
-            product._base !== "food" &&
-            product.pageType !== "food" &&
-            product.category !== "Kitchen" &&
-            !product.isKitchenOnly &&
-            product.featured === true
+          // Check if this is a kitchen/food product
+          const isKitchenProduct = (
+            product._base === "kitchen" ||
+            product.pageType === "kitchen" ||
+            product._base === "food" ||
+            product.pageType === "food" ||
+            product.category === "Kitchen" ||
+            product.category === "Kitchen & Food" ||
+            product.isKitchenOnly === true
           );
+
+          // Only include featured products that are not kitchen products
+          const shouldInclude = !isKitchenProduct && product.featured === true;
+
+          // Debug logging for featured products
+          if (product.featured === true) {
+            console.log(`Featured product: ${product.name}`, {
+              included: shouldInclude,
+              isKitchen: isKitchenProduct,
+              _base: product._base,
+              pageType: product.pageType,
+              category: product.category,
+              isKitchenOnly: product.isKitchenOnly
+            });
+          }
+
+          return shouldInclude;
         });
 
         console.log(`Filtered ${data.length} products to ${filtered.length} products`);

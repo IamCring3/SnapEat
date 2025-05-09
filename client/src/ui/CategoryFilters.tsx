@@ -68,7 +68,25 @@ const CategoryFilters = ({ id }: { id: string | undefined }) => {
             </div>
           ) : (
             categories
-              ?.filter((item: CategoryProps) => item._base !== 'kitchen' && item._base !== 'food')
+              ?.filter((item: CategoryProps) => {
+                // Filter out kitchen and food categories
+                const isKitchenCategory =
+                  item._base === 'kitchen' ||
+                  item._base === 'food' ||
+                  item.name === 'Kitchen' ||
+                  item.name === 'Kitchen & Food' ||
+                  item.isKitchenPage === true;
+
+                // Debug logging
+                console.log(`Category: ${item.name}`, {
+                  included: !isKitchenCategory,
+                  _base: item._base,
+                  name: item.name,
+                  isKitchenPage: item.isKitchenPage
+                });
+
+                return !isKitchenCategory;
+              })
               .map((item: CategoryProps) => (
                 <Link
                   to={`/category/${item?._base}`}

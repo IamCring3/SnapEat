@@ -62,15 +62,29 @@ const Product = () => {
                   return false;
                 }
 
-                // Filter out kitchen and food products
-                return (
-                  product._base !== "kitchen" &&
-                  product.pageType !== "kitchen" &&
-                  product._base !== "food" &&
-                  product.pageType !== "food" &&
-                  product.category !== "Kitchen" &&
-                  !product.isKitchenOnly
+                      // Check if this is a kitchen/food product
+                const isKitchenProduct = (
+                  product._base === "kitchen" ||
+                  product.pageType === "kitchen" ||
+                  product._base === "food" ||
+                  product.pageType === "food" ||
+                  product.category === "Kitchen" ||
+                  product.category === "Kitchen & Food" ||
+                  product.isKitchenOnly === true
                 );
+
+                // Debug logging for kitchen products
+                if (isKitchenProduct) {
+                  console.log(`Filtering out kitchen product: ${product.name}`, {
+                    _base: product._base,
+                    pageType: product.pageType,
+                    category: product.category,
+                    isKitchenOnly: product.isKitchenOnly
+                  });
+                }
+
+                // Return false for kitchen products (filter them out)
+                return !isKitchenProduct;
               })
             : [];
           setAllProducts(filtered);

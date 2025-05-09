@@ -14,6 +14,7 @@ export interface CategoryProps {
   name: string;
   _base: string;
   description: string;
+  isKitchenPage?: boolean;
 }
 
 export interface ProductVariation {

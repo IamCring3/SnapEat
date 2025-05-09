@@ -19,7 +19,18 @@ const ProductCard = ({ item, setSearchText }: Props) => {
       item._base === "food" ||
       item.pageType === "food" ||
       item.category === "Kitchen" ||
+      item.category === "Kitchen & Food" ||
       item.isKitchenOnly === true;
+
+    // Debug logging
+    console.log(`Clicked product: ${item.name}`, {
+      isKitchen: isKitchenProduct,
+      _base: item._base,
+      pageType: item.pageType,
+      category: item.category,
+      isKitchenOnly: item.isKitchenOnly,
+      navigatingTo: isKitchenProduct ? `/kitchen/${item?._id}` : `/product/${item?._id}`
+    });
 
     if (isKitchenProduct) {
       navigation(`/kitchen/${item?._id}`);

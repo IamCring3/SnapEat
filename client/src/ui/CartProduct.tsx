@@ -29,6 +29,7 @@ const CartProduct = ({ product }: { product: ProductProps }) => {
          product._base === "food" ||
          product.pageType === "food" ||
          product.category === "Kitchen" ||
+         product.category === "Kitchen & Food" ||
          product.isKitchenOnly === true)
           ? `/kitchen/${product?._id}`
           : `/product/${product?._id}`

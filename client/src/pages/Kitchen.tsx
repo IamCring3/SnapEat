@@ -66,15 +66,27 @@ const Kitchen = () => {
               return false;
             }
 
-            // Filter only kitchen and food products
-            return (
+            // Check if this is a kitchen/food product
+            const isKitchenProduct = (
               product._base === "kitchen" ||
               product.pageType === "kitchen" ||
               product._base === "food" ||
               product.pageType === "food" ||
               product.category === "Kitchen" ||
+              product.category === "Kitchen & Food" ||
               product.isKitchenOnly === true
             );
+
+            // Debug logging for all products to see what's available
+            console.log(`Product: ${product.name}`, {
+              isKitchen: isKitchenProduct,
+              _base: product._base,
+              pageType: product.pageType,
+              category: product.category,
+              isKitchenOnly: product.isKitchenOnly
+            });
+
+            return isKitchenProduct;
           }) : [];
 
           setAllProducts(kitchenProducts);
