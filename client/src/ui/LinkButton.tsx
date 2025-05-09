@@ -16,7 +16,7 @@ const LinkButton = ({ showButton, link, className, text }: Props) => {
     className
   );
   return (
-    <Link to={link ? link : "/products"} className={newClassName}>
+    <Link to={link ? link : "/product"} className={newClassName}>
       {text || "Shop Now"} {!showButton && <FaArrowRight className="ml-2" />}
     </Link>
   );
