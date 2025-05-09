@@ -12,7 +12,21 @@ const ProductCard = ({ item, setSearchText }: Props) => {
   const navigation = useNavigate();
 
   const handleProduct = () => {
-    navigation(`/product/${item?._id}`);
+    // Navigate to kitchen page for kitchen products, otherwise to product page
+    const isKitchenProduct =
+      item._base === "kitchen" ||
+      item.pageType === "kitchen" ||
+      item._base === "food" ||
+      item.pageType === "food" ||
+      item.category === "Kitchen" ||
+      item.isKitchenOnly === true;
+
+    if (isKitchenProduct) {
+      navigation(`/kitchen/${item?._id}`);
+    } else {
+      navigation(`/product/${item?._id}`);
+    }
+
     setSearchText && setSearchText("");
   };
 
@@ -44,7 +58,7 @@ const ProductCard = ({ item, setSearchText }: Props) => {
           {item?.name}
         </h2>
         <p className="text-sm text-gray-500">{item?.quantity || "1 ltr"}</p>
-        
+
         <div className="flex items-center justify-between pt-2">
           <span className="text-base font-semibold">
             <FormattedPrice amount={item?.discountedPrice} />

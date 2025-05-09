@@ -52,7 +52,22 @@ const FavoriteProduct = ({ product }: { product: ProductProps }) => {
         </p>
       </div>
       <div
-        onClick={() => navigate(`/product/${product?._id}`)}
+        onClick={() => {
+          // Navigate to kitchen page for kitchen products, otherwise to product page
+          const isKitchenProduct =
+            product._base === "kitchen" ||
+            product.pageType === "kitchen" ||
+            product._base === "food" ||
+            product.pageType === "food" ||
+            product.category === "Kitchen" ||
+            product.isKitchenOnly === true;
+
+          if (isKitchenProduct) {
+            navigate(`/kitchen/${product?._id}`);
+          } else {
+            navigate(`/product/${product?._id}`);
+          }
+        }}
         className="ml-4 flex-shrink-0 h-20 w-20 sm:w-40 sm:h-40 sm:order-first sm:m-0 sm:mr-6 border border-gray-200 rounded-md hover:border-skyText duration-200 cursor-pointer group overflow-hidden"
       >
         <img

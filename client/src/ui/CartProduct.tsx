@@ -22,7 +22,17 @@ const CartProduct = ({ product }: { product: ProductProps }) => {
   };
   return (
     <div className="flex py-6 sm:py-10">
-      <Link to={`/product/${product?._id}`}>
+      <Link to={
+        // Navigate to kitchen page for kitchen products, otherwise to product page
+        (product._base === "kitchen" ||
+         product.pageType === "kitchen" ||
+         product._base === "food" ||
+         product.pageType === "food" ||
+         product.category === "Kitchen" ||
+         product.isKitchenOnly === true)
+          ? `/kitchen/${product?._id}`
+          : `/product/${product?._id}`
+      }>
         <img
           src={product?.images[0]}
           alt="productImage"

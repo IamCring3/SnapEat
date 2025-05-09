@@ -62,10 +62,16 @@ const Pagination = () => {
             return false;
           }
 
-          // Filter out kitchen products and only include featured products
-          return product._base !== "kitchen" &&
-                 product.pageType !== "kitchen" &&
-                 product.featured === true;
+          // Filter out kitchen and food products and only include featured products
+          return (
+            product._base !== "kitchen" &&
+            product.pageType !== "kitchen" &&
+            product._base !== "food" &&
+            product.pageType !== "food" &&
+            product.category !== "Kitchen" &&
+            !product.isKitchenOnly &&
+            product.featured === true
+          );
         });
 
         console.log(`Filtered ${data.length} products to ${filtered.length} products`);

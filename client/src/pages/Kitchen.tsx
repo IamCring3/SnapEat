@@ -66,8 +66,15 @@ const Kitchen = () => {
               return false;
             }
 
-            // Filter only kitchen products
-            return product._base === "kitchen" || product.pageType === "kitchen";
+            // Filter only kitchen and food products
+            return (
+              product._base === "kitchen" ||
+              product.pageType === "kitchen" ||
+              product._base === "food" ||
+              product.pageType === "food" ||
+              product.category === "Kitchen" ||
+              product.isKitchenOnly === true
+            );
           }) : [];
 
           setAllProducts(kitchenProducts);
