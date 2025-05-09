@@ -4,8 +4,13 @@ import crypto from 'crypto';
 const router = Router();
 
 // Get Razorpay keys from environment variables
-const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "rzp_test_C9xDgkosiD7b6l";
-const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "N1AIv5WW7anORvIpuXkuxgIk";
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+
+// Check if Razorpay keys are available
+if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+  console.error("Razorpay keys not found in environment variables");
+}
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -55,6 +60,15 @@ router.post("/checkout", async (req, res) => {
 
     console.log("Creating Razorpay order with options:", options);
     console.log("Using Razorpay credentials - Key ID:", RAZORPAY_KEY_ID);
+
+    // Check if Razorpay keys are available
+    if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+      console.error("Razorpay keys not found in environment variables");
+      return res.status(500).json({
+        error: "Payment configuration error. Please contact support.",
+        success: false
+      });
+    }
 
     try {
       const order = await razorpay.orders.create(options);

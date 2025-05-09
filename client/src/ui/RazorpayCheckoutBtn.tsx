@@ -149,8 +149,15 @@ const RazorpayCheckoutBtn = ({ products, shippingAddress, codEnabled = false }: 
 
       // Initialize Razorpay
       // Use the key from environment variables with fallback to test key
-      const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_C9xDgkosiD7b6l";
+      const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID;
       console.log("Using Razorpay key:", razorpayKeyId);
+
+      // If no key is found, show an error and return
+      if (!razorpayKeyId) {
+        console.error("Razorpay key not found in environment variables");
+        toast.error("Payment configuration error. Please contact support.");
+        return;
+      }
 
       const options = {
         key: razorpayKeyId,

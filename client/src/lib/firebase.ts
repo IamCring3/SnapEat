@@ -51,3 +51,12 @@ console.log("Firebase initialized with config:", {
   authDomain: firebaseConfig.authDomain,
   appId: firebaseConfig.appId
 });
+
+// Log Firebase Auth configuration for debugging phone authentication
+console.log("Firebase Auth configuration:", {
+  currentUser: auth.currentUser,
+  languageCode: auth.languageCode,
+  settings: {
+    appVerificationDisabledForTesting: auth.settings.appVerificationDisabledForTesting
+  }
+});

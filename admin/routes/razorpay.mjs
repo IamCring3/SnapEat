@@ -3,18 +3,34 @@ import crypto from 'crypto';
 
 const router = Router();
 
-// Razorpay test keys
-const RAZORPAY_KEY_ID = "rzp_test_C9xDgkosiD7b6l";
-const RAZORPAY_KEY_SECRET = "N1AIv5WW7anORvIpuXkuxgIk";
+// Get Razorpay keys from environment variables
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+
+// Check if Razorpay keys are available
+if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+  console.error("Razorpay keys not found in environment variables");
+}
 
 // Create order endpoint
 router.post("/razorpay/create-order", async (req, res) => {
   try {
     const { amount, email } = req.body;
 
-    // Initialize Razorpay - we're doing this inline since we don't have the package installed yet
-    // In production, you would use: const razorpay = new Razorpay({ key_id, key_secret });
-    const razorpayOrderUrl = "https://api.razorpay.com/v1/orders";
+    // Check if Razorpay keys are available
+    if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+      console.error("Razorpay keys not found in environment variables");
+      return res.status(500).json({
+        error: "Payment configuration error. Please contact support.",
+        success: false
+      });
+    }
+
+    // Initialize Razorpay with environment variables
+    const razorpay = new Razorpay({
+      key_id: RAZORPAY_KEY_ID,
+      key_secret: RAZORPAY_KEY_SECRET
+    });
 
     // Create Razorpay order
     const options = {
@@ -60,6 +76,17 @@ router.post("/razorpay/verify", async (req, res) => {
       razorpay_payment_id,
       razorpay_signature,
     } = req.body;
+
+    // Check if Razorpay keys are available
+    if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+      console.error("Razorpay keys not found in environment variables");
+      return res.status(500).json({
+        error: "Payment configuration error. Please contact support.",
+        success: false
+      });
+    }
+
+    console.log("Verifying payment with Razorpay Key Secret");
 
     // Create signature verification payload
     const hmac = crypto.createHmac('sha256', RAZORPAY_KEY_SECRET);
