@@ -114,16 +114,8 @@ const Header = () => {
 
             {/* Menubar */}
             <div className="flex items-center gap-x-6 text-2xl">
-              <Link to={"/profile"} className="transform hover:scale-110 transition-all duration-300 ease-in-out">
-                {currentUser ? (
-                  <img
-                    src={currentUser?.avatar}
-                    alt="profileImg"
-                    className="w-10 h-10 rounded-full object-cover ring-2 ring-transparent hover:ring-primary transition-all duration-300"
-                  />
-                ) : (
-                  <FiUser className="text-gray-600 hover:text-primary transition-colors duration-300" />
-                )}
+            <Link to="/profile" className="transform hover:scale-110 transition-all duration-300 ease-in-out">
+                <FiUser className="text-gray-600 hover:text-primary transition-colors duration-300" />
               </Link>
               <Link to={"/cart"} className="relative block transform hover:scale-110 transition-all duration-300 ease-in-out">
                 <FiShoppingBag className="text-gray-600 hover:text-primary transition-colors duration-300" />
