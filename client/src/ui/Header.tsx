@@ -7,7 +7,7 @@ import {
   Transition,
 } from "@headlessui/react";
 import { FaChevronDown } from "react-icons/fa";
-import { FiShoppingBag, FiUser } from "react-icons/fi";
+import { FiShoppingBag, FiUser, FiHome, FiFileText } from "react-icons/fi";
 import { IoClose, IoSearchOutline } from "react-icons/io5";
 import { Link, useLocation } from "react-router-dom";
 import { logo } from "../assets";
@@ -114,7 +114,7 @@ const Header = () => {
 
             {/* Menubar */}
             <div className="flex items-center gap-x-6 text-2xl">
-            <Link to="/profile" className="transform hover:scale-110 transition-all duration-300 ease-in-out">
+              <Link to="/profile" className="transform hover:scale-110 transition-all duration-300 ease-in-out">
                 <FiUser className="text-gray-600 hover:text-primary transition-colors duration-300" />
               </Link>
               <Link to={"/cart"} className="relative block transform hover:scale-110 transition-all duration-300 ease-in-out">
@@ -161,22 +161,31 @@ const Header = () => {
                 </MenuItems>
               </Transition>
             </Menu>
-            <nav className="flex items-center gap-12">
+            <nav className="flex items-center justify-center gap-6 md:gap-12 py-4">
               {bottomNavigation.map(({ title, link }) => {
                 const isActive = location.pathname === link ||
                   (link !== "/" && location.pathname.startsWith(link));
+
+                const iconMap = {
+                  Home: <FiHome className="w-5 h-5" />,
+                  Shop: <FiShoppingBag className="w-5 h-5" />,
+                  Kitchen: <FiHome className="w-5 h-5" />,
+                  Cart: <FiShoppingBag className="w-5 h-5" />,
+                  Orders: <FiFileText className="w-5 h-5" />
+                };
 
                 return (
                   <Link
                     to={link}
                     key={title}
-                    className={`text-sm font-medium transform transition-all duration-450 ease-in hover:scale-105 rounded-full ${
+                    className={`flex flex-col items-center justify-center gap-1 text-xs font-medium transform transition-all duration-450 ease-in hover:scale-105 ${
                       isActive
-                        ? "bg-primary text-white px-4 py-2 rounded-full shadow-sm hover:shadow-md hover:bg-primary/90"
+                        ? "text-primary"
                         : "text-gray-600 hover:text-primary"
                     }`}
                   >
-                    {title}
+                    {iconMap[title]}
+                    <span className="hidden md:inline-block">{title}</span>
                   </Link>
                 );
               })}
