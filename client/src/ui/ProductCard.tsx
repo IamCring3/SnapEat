@@ -1,6 +1,5 @@
 import { ProductProps } from "../../type";
 import { useNavigate } from "react-router-dom";
-import FormattedPrice from "./FormattedPrice";
 import AddToCartBtn from "./AddToCartBtn";
 
 interface Props {
@@ -65,14 +64,26 @@ const ProductCard = ({ item, setSearchText }: Props) => {
 
       {/* Product Details */}
       <div className="space-y-2">
-        <h2 className="text-base font-medium line-clamp-2 cursor-pointer" onClick={handleProduct}>
+        <h2 
+          className="text-base font-medium cursor-pointer break-words overflow-hidden text-ellipsis"
+          style={{
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            minHeight: '2.5rem',
+            lineHeight: '1.25rem',
+            maxHeight: '2.5rem'
+          }}
+          onClick={handleProduct}
+          title={item?.name}
+        >
           {item?.name}
         </h2>
         <p className="text-sm text-gray-500">{item?.quantity || "1 ltr"}</p>
 
         <div className="flex items-center justify-between pt-2">
           <span className="text-base font-semibold">
-            <FormattedPrice amount={item?.discountedPrice} />
+            ₹{item?.discountedPrice?.toFixed(2) || '0.00'}
           </span>
           <AddToCartBtn product={item} className="px-4 py-1" />
         </div>

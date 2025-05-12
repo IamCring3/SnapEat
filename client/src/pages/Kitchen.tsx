@@ -10,23 +10,21 @@ import PriceTag from "../ui/PriceTag";
 import { MdOutlineStarOutline } from "react-icons/md";
 import { FaRegEye } from "react-icons/fa";
 import FormattedPrice from "../ui/FormattedPrice";
-import { IoClose } from "react-icons/io5";
 import AddToCartBtn from "../ui/AddToCartBtn";
 import { productPayment } from "../assets";
 import ProductCard from "../ui/ProductCard";
-import CategoryFilters from "../ui/CategoryFilters";
+
 
 const Kitchen = () => {
   const [productData, setProductData] = useState<ProductProps | null>(null);
   const [allProducts, setAllProducts] = useState<ProductProps[]>([]);
   const [loading, setLoading] = useState(false);
   const [imgUrl, setImgUrl] = useState("");
-  const [color, setColor] = useState("");
   const { id } = useParams();
 
   const endpoint = id
-    ? `${config?.baseUrl}/products/${id}`
-    : `${config?.baseUrl}/products`;
+    ? `${config?.baseUrl}/kitchen/${id}`
+    : `${config?.baseUrl}/kitchen`;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,20 +35,46 @@ const Kitchen = () => {
         const { getProductsFromFirebase, getProductByIdFromFirebase } = await import('../lib/index');
 
         if (id) {
+          console.log('Fetching product with ID:', id);
           // Fetch single product from Firebase
           const product = await getProductByIdFromFirebase(id);
+          console.log('Fetched product:', product);
 
-          if (product && (product._base === "kitchen" || product.pageType === "kitchen")) {
-            setProductData(product);
-            setAllProducts([]);
+          if (product) {
+            console.log('Product found, checking if it\'s a kitchen product...');
+            const isKitchen = (
+              product._base === "kitchen" ||
+              product.pageType === "kitchen" ||
+              product._base === "food" ||
+              product.pageType === "food" ||
+              product.category === "Kitchen" ||
+              product.category === "Kitchen & Food" ||
+              product.isKitchenOnly === true
+            );
+            console.log('Is kitchen product?', isKitchen, 'Product properties:', {
+              _base: product._base,
+              pageType: product.pageType,
+              category: product.category,
+              isKitchenOnly: product.isKitchenOnly
+            });
+
+            if (isKitchen) {
+              setProductData(product);
+              setAllProducts([]);
+            } else {
+              console.log('Product is not marked as a kitchen product');
+              setProductData(null);
+              setAllProducts([]);
+            }
           } else {
-            // If not a kitchen product, show empty state
+            console.log('No product found with ID:', id);
             setProductData(null);
             setAllProducts([]);
           }
         } else {
           // Fetch all products from Firebase
           const data = await getProductsFromFirebase();
+          console.log('All products from Firebase:', data);
 
           // Filter only kitchen products
           const kitchenProducts = Array.isArray(data) ? data.filter((product: ProductProps) => {
@@ -78,12 +102,13 @@ const Kitchen = () => {
             );
 
             // Debug logging for all products to see what's available
-            console.log(`Product: ${product.name}`, {
+            console.log(`Product: ${product.name || 'Unnamed Product'}`, {
               isKitchen: isKitchenProduct,
               _base: product._base,
               pageType: product.pageType,
               category: product.category,
-              isKitchenOnly: product.isKitchenOnly
+              isKitchenOnly: product.isKitchenOnly,
+              id: product._id || 'no-id'
             });
 
             return isKitchenProduct;
@@ -106,9 +131,6 @@ const Kitchen = () => {
   useEffect(() => {
     if (productData?.images && productData.images.length > 0) {
       setImgUrl(productData.images[0]);
-    }
-    if (productData?.colors && productData.colors.length > 0) {
-      setColor(productData.colors[0]);
     }
   }, [productData]);
 
@@ -170,64 +192,8 @@ const Kitchen = () => {
                     <p className="text-base font-semibold">{`(${productData?.reviews} reviews)`}</p>
                   </div>
                 </div>
-                <p className="flex items-center">
-                  <FaRegEye className="mr-1" />{" "}
-                  <span className="font-semibold mr-1">
-                    {productData?.reviews}
-                  </span>{" "}
-                  peoples are viewing this right now
-                </p>
-                <p>
-                  You are saving{" "}
-                  <span className="text-base font-semibold text-green-500">
-                    <FormattedPrice
-                      amount={
-                        productData?.regularPrice! -
-                        productData?.discountedPrice!
-                      }
-                    />
-                  </span>{" "}
-                  upon purchase
-                </p>
-                <div>
-                  {color && (
-                    <p>
-                      Color:{" "}
-                      <span
-                        className="font-semibold capitalize"
-                        style={{ color: color }}
-                      >
-                        {color}
-                      </span>
-                    </p>
-                  )}
-                  <div className="flex items-center gap-x-3">
-                    {productData?.colors?.map((item) => (
-                      <div
-                        key={item}
-                        className={`${
-                          item === color
-                            ? "border border-black p-1 rounded-full"
-                            : "border-transparent"
-                        }`}
-                      >
-                        <div
-                          className="w-10 h-10 rounded-full cursor-pointer"
-                          style={{ backgroundColor: item }}
-                          onClick={() => setColor(item)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  {color && (
-                    <button
-                      onClick={() => setColor("")}
-                      className="font-semibold mt-1 flex items-center gap-1 hover:text-red-600 duration-200"
-                    >
-                      <IoClose /> Clear
-                    </button>
-                  )}
-                </div>
+
+
                 <p>
                   Brand:{" "}
                   <span className="font-medium">{productData?.brand}</span>
