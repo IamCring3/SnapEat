@@ -23,7 +23,8 @@ import TestApi from "./pages/TestApi.tsx";
 import AdminProducts from "./pages/AdminProducts.tsx";
 import AdminCategories from "./pages/AdminCategories.tsx";
 import AdminLogin from "./pages/AdminLogin.tsx";
-
+import PrivacyPolicy from "./pages/PrivacyPolicy.tsx";
+import RequestAccountDeletion from "./pages/RequestAccountDeletion.tsx";
 
 import Layout from "./ui/Layout.tsx";
 import AdminLayout from "./ui/AdminLayout.tsx";
@@ -96,6 +97,14 @@ const router = createBrowserRouter([
       {
         path: "/test-api",
         element: <TestApi />,
+      },
+      {
+        path: "/privacy-policy",
+        element: <PrivacyPolicy />,
+      },
+      {
+        path: "/request-account-deletion",
+        element: <RequestAccountDeletion />,
       },
       {
         path: "/admin/login",
